@@ -1,0 +1,18 @@
+﻿<CascadingAuthenticationState>
+    <Router AppAssembly="@typeof(App).Assembly">
+        <Found Context="routeData">
+            <AuthorizeRouteView RouteData="@routeData"
+                                DefaultLayout="@typeof(MainLayout)">
+                <NotAuthorized>
+                    <SM.WEB.Features.Pages.ErrorPage ErrorStatusCode="401" ErorrTitle="Không được phép truy cập!"
+                                            ErrorDescription="Bạn có thể cần phải đăng nhập với tư cách quản trị viên." />
+                </NotAuthorized>
+            </AuthorizeRouteView>
+        </Found>
+        <NotFound>
+            <LayoutView Layout="@typeof(MainLayout)">
+                <SM.WEB.Features.Pages.ErrorPage />
+            </LayoutView>
+        </NotFound>
+    </Router>
+</CascadingAuthenticationState>
