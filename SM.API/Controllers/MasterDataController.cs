@@ -140,6 +140,38 @@ namespace SM.API.Controllers
             }
         }
 
-       
+        /// <summary>
+        /// hainguyen 2024/02/26
+        /// API cập nhật thông tin User
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("UpdateCustomer")]
+        public async Task<IActionResult> UpdateCustomer([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _masterService.UpdateCustomerAsync(request);
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "UpdateCustomer");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
+        }
+
+
     }
 }

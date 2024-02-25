@@ -13,6 +13,8 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Net;
 using System.Security.Policy;
+using Org.BouncyCastle.Asn1.Ocsp;
+using Org.BouncyCastle.Pqc.Crypto.Hqc;
 
 namespace SM.API.Services;
 public interface IMasterDataService
@@ -21,7 +23,9 @@ public interface IMasterDataService
     Task<ResponseModel> UpdateUsers(RequestModel pRequest);
     Task<IEnumerable<UserModel>> Login(LoginRequestModel pRequest);
     Task<ResponseModel> DeleteDataAsync(RequestModel pRequest);
-   
+    Task<ResponseModel> UpdateCustomerAsync(RequestModel pRequest);
+
+
 }
 
 public class MasterDataService : IMasterDataService
@@ -191,7 +195,6 @@ public class MasterDataService : IMasterDataService
         return data;
     }
 
-
     /// <summary>
     /// Đăng nhập
     /// </summary>
@@ -224,6 +227,61 @@ public class MasterDataService : IMasterDataService
             await _context.DisConnect();
         }
         return data;
+    }
+
+    public async Task<ResponseModel> UpdateCustomerAsync(RequestModel pRequest)
+    {
+        ResponseModel response = new ResponseModel();
+        try
+        {
+            await _context.Connect();
+            string queryString = "";
+            CustomerModel oCustomer = JsonConvert.DeserializeObject<CustomerModel>(pRequest.Json + "")!;
+            SqlParameter[] sqlParameters;
+            async Task ExecQuery()
+            {
+                var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+                if (data != null && data.Rows.Count > 0)
+                {
+                    response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                    response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+                }
+            }
+            switch (pRequest.Type)
+            {
+                case nameof(EnumType.Add):
+                    oCustomer.CusNo = await getVoucherNo(nameof(EnumTable.Customer));
+                    if(string.IsNullOrWhiteSpace(oCustomer.CusNo))
+                    {
+                        response.StatusCode = (int)HttpStatusCode.NoContent;
+                        response.Message = "Không đánh được mã Khách hàng!. Vui lòng kiểm tra lại";
+                        return response;
+                    }
+                    sqlParameters = getCustomerParams(oCustomer, pRequest.UserId);
+                    queryString = @"Insert into [dbo].[Customers] ([CusNo],[FullName],[PhoneNumber],[Email]
+                                    ,[Address],[DateOfBirth],[NoteForAll],[DateCreate],[UserCreate],[IsDelete]) 
+                                    values (@CusNo, @FullName, @PhoneNumber, @Email
+                                    ,@Address, @DateOfBirth, @NoteForAll, @DateTimeNow, @UserId, 0)";
+                    await ExecQuery();
+                    break;
+                case nameof(EnumType.Update):
+                    break;
+                default:
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    response.Message = "Không xác định được phương thức!";
+                    break;
+            }    
+        }
+        catch (Exception ex)
+        {
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
+            response.Message = ex.Message;
+        }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return response;
     }
 
     /// <summary>
@@ -379,6 +437,65 @@ public class MasterDataService : IMasterDataService
         }
         catch (Exception) { throw; }
         return data;
+    }
+
+    /// <summary>
+    /// lấy params cho bảng Khách hàng
+    /// </summary>
+    /// <param name="oCustomer"></param>
+    /// <param name="pUserId"></param>
+    /// <returns></returns>
+    private SqlParameter[] getCustomerParams(CustomerModel oCustomer, int pUserId)
+    {
+        SqlParameter[] sqlParameters = new SqlParameter[9];
+        sqlParameters[0] = new SqlParameter("@CusNo", oCustomer.CusNo);
+        sqlParameters[1] = new SqlParameter("@FullName", oCustomer.FullName);
+        sqlParameters[2] = new SqlParameter("@Phone1", oCustomer.PhoneNumber ?? (object)DBNull.Value);
+        sqlParameters[3] = new SqlParameter("@Email", oCustomer.Email ?? (object)DBNull.Value);
+        sqlParameters[4] = new SqlParameter("@Address", oCustomer.Address ?? (object)DBNull.Value);
+        sqlParameters[5] = new SqlParameter("@DateOfBirth", oCustomer.DateOfBirth ?? (object)DBNull.Value);
+        sqlParameters[6] = new SqlParameter("@NoteForAll", oCustomer.NoteForAll ?? (object)DBNull.Value);
+        sqlParameters[7] = new SqlParameter("@UserId", pUserId);
+        sqlParameters[8] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+        return sqlParameters;
+    }
+
+    /// <summary>
+    /// Đánh số chứng từ
+    /// </summary>
+    /// <param name="pTable"></param>
+    /// <returns></returns>
+    private async Task<string> getVoucherNo(string pTable = nameof(EnumTable.Customer))
+    {
+        string strNo = "";
+        string strPretrix = "";
+        string queryString = "";
+        //DateTime getdate = _dateTimeService.GetCurrentVietnamTime();
+        DateTime getdate = new DateTime(2024,01,01);
+        switch (pTable)
+        {
+            case nameof(EnumTable.Customer):
+                string strMonth = $"0{getdate.Day}".Substring($"0{getdate.Day}".Length - 2);
+                strPretrix = $"KH-{(getdate.Year + "").Substring(2)}{strMonth}-";
+                queryString = @$"select top 1 CusNo  from [dbo].[Customers] with(nolock) 
+                                  where CusNo like '%{strPretrix}%' order by CusNo desc";
+                // lấy mã
+                strNo = Convert.ToString(await _context.ExecuteScalarObjectAsync(queryString)) + "";
+                if(string.IsNullOrWhiteSpace(strNo))
+                {
+                    strNo = $"{strPretrix}00001";
+                }  
+                else
+                {
+                    int iMax = int.Parse(strNo.Substring(strPretrix.Length - 5)) + 1; // tăng 1 đơn vị
+                    strNo = $"00000{iMax}".Substring($"00000{iMax}".Length - 5);
+                    strNo = $"{strPretrix}{strNo}";
+                }    
+                break;
+            default:
+                break;
+        }    
+        return strNo;
     }
     #endregion Private Funtions
 }

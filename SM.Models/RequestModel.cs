@@ -103,16 +103,7 @@ public enum EnumTable
 {
 
     @Users,
-    @KindBooks,
-    @Publishers,
-    @Books,
-    @Readers,
-    @Batchs,
-    @Series,
-    @BookSerials,
-    @Authors,
-    @Locations,
-    @BorrowOrders
+    @Customer
 }
 
 public enum DocStatus
