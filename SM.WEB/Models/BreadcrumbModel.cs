@@ -1,6 +1,6 @@
 ﻿namespace SM.WEB.Models
 {
-    public class BreadcrumLModel
+    public class BreadcrumbModel
     {
         public string? Text { get; set; }
         public string? Url { get; set; }

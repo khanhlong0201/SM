@@ -35,11 +35,10 @@ public class UserController : SMControllerBase
         try
         {
             await base.OnInitializedAsync();
-            ListBreadcrumbs = new List<BreadcrumLModel>
+            ListBreadcrumbs = new List<BreadcrumbModel>
                 {
-                    new BreadcrumLModel() { Text = "Trang chủ", IsShowIcon = true, Icon = "fa-solid fa-house-chimney" },
-                    new BreadcrumLModel() { Text = "Hệ thống" },
-                    new BreadcrumLModel() { Text = "Nhân viên" }
+                    new BreadcrumbModel() { Text = "Trang chủ", IsShowIcon = true, Icon = "fa-solid fa-house-chimney" },
+                    new BreadcrumbModel() { Text = "Nhân viên" }
                 };
             await NotifyBreadcrumb.InvokeAsync(ListBreadcrumbs);
         }

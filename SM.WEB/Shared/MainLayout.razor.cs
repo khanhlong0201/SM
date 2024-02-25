@@ -19,7 +19,7 @@ public partial class MainLayout
     [Inject] private ILogger<MainLayout>? _logger { get; init; }
     [Inject] private LoaderService? _loaderService { get; init; }
     [Inject] private ICliMasterDataService? _masterDataService { get; init; }
-    public List<BreadcrumLModel>? ListBreadcrumbs { get; set; }
+    public List<BreadcrumbModel>? ListBreadcrumbs { get; set; }
     public string PageActive { get; set; } = "trang-chu";
     private bool IsShowDialogProfile { get; set; }
     public HConfirm? _rDialogProfiles { get; set; }
@@ -30,10 +30,10 @@ public partial class MainLayout
     public string UserName { get; set; } = "";
     public int UserId { get; set; } = -1;
     public UserProfileModel UserUpdate { get; set; } = new UserProfileModel();
-    EventCallback<List<BreadcrumLModel>> BreadcrumbsHandler =>
-        EventCallback.Factory.Create(this, (Action<List<BreadcrumLModel>>)NotifyBreadcrumb);
+    EventCallback<List<BreadcrumbModel>> BreadcrumbsHandler =>
+        EventCallback.Factory.Create(this, (Action<List<BreadcrumbModel>>)NotifyBreadcrumb);
 
-    private void NotifyBreadcrumb(List<BreadcrumLModel> _breadcrumbs )
+    private void NotifyBreadcrumb(List<BreadcrumbModel> _breadcrumbs )
     {
         try
         {

@@ -13,10 +13,6 @@
                     <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
                         <a href="/" class="d-flex align-items-center text-decoration-none">
                             <img src="../assets/SM.png" width="110" height="32" alt="HSystem" class="navbar-brand-image">
-                            <span style="height: 100%; display: grid;margin-left: 4px;">
-                                <span style="font-size: 13px">QUẢN LÝ THƯ VIỆN</span>
-                                <span style="font-size: 13px">PHÒNG GIÁO DỤC DUY KHÁNH</span>
-                            </span>
                         </a>
                     </h1>
                     <div class="navbar-nav flex-row order-md-last">
@@ -61,20 +57,52 @@
                                 <li class="nav-item @(PageActive == "/index" ||  PageActive == "/" ? "active": "")">
                                     <a class="nav-link" href="index">
                                         <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M5 12l-2 0l9 -9l9 9l-2 0" />
+                                                <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" />
+                                                <path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" />
+                                            </svg>
                                         </span>
                                         <span class="nav-link-title">
                                             Trang chủ
                                         </span>
                                     </a>
                                 </li>
+                                <li class="nav-item @(PageActive == "/customer" ||  PageActive == "/" ? "active": "")">
+                                    <a class="nav-link" href="customer">
+                                        <span class="nav-link-icon d-md-none d-lg-inline-block">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M10 13a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                                <path d="M8 21v-1a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v1" />
+                                                <path d="M15 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                                <path d="M17 10h2a2 2 0 0 1 2 2v1" />
+                                                <path d="M5 5a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+                                                <path d="M3 13v-1a2 2 0 0 1 2 -2h2" />
+                                            </svg>
+
+                                            
+                                        </span>
+                                        <span class="nav-link-title">
+                                            Khách hàng
+                                        </span>
+                                    </a>
+                                </li>
                                 <li class="nav-item @(PageActive == "/user" ||  PageActive == "/" ? "active": "")">
                                     <a class="nav-link" href="user">
                                         <span class="nav-link-icon d-md-none d-lg-inline-block">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M5 12l-2 0l9 -9l9 9l-2 0" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7" /><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6" /></svg>
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                                <path d="M5 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                                <path d="M3 21v-2a4 4 0 0 1 4 -4h4c.96 0 1.84 .338 2.53 .901" />
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                                <path d="M16 19h6" />
+                                                <path d="M19 16v6" />
+                                            </svg>
                                         </span>
                                         <span class="nav-link-title">
-                                            Quản lý nhân viên
+                                            Nhân viên
                                         </span>
                                     </a>
                                 </li>

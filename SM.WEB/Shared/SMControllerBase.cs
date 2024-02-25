@@ -18,8 +18,8 @@ public class SMControllerBase : ComponentBase
 
     #region Properties
     [CascadingParameter]
-    public EventCallback<List<BreadcrumLModel>> NotifyBreadcrumb { get; set; }
-    public List<BreadcrumLModel>? ListBreadcrumbs { get; set; }
+    public EventCallback<List<BreadcrumbModel>> NotifyBreadcrumb { get; set; }
+    public List<BreadcrumbModel>? ListBreadcrumbs { get; set; }
 
     public int pUserId { get; set; }
     public bool pIsAdmin { get; set; }

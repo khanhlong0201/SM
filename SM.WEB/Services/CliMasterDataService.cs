@@ -29,16 +29,13 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
     private readonly ToastService _toastService;
     private readonly ILocalStorageService _localStorage;
     private readonly AuthenticationStateProvider _authenticationStateProvider;
-    private readonly IWebHostEnvironment _webHostEnvironment;
-    long maxFileSize = 134217728;
     public CliMasterDataService(IHttpClientFactory factory, ILogger<CliMasterDataService> logger
-        , ToastService toastService, ILocalStorageService localStorage, AuthenticationStateProvider authenticationStateProvider, IWebHostEnvironment webHostEnvironment)
+        , ToastService toastService, ILocalStorageService localStorage, AuthenticationStateProvider authenticationStateProvider)
         : base(factory, logger)
     {
         _toastService = toastService;
         _localStorage = localStorage;
         _authenticationStateProvider = authenticationStateProvider;
-        _webHostEnvironment = webHostEnvironment;
     }
 
     /// <summary>

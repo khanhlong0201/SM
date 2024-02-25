@@ -1,0 +1,59 @@
+﻿@page "/customer"
+@inherits CustomerController
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png">Xóa dòng</ToolBarButton>
+</TelerikToolBar>
+
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+    <TelerikGrid Data="@ListCustomers"
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterRow"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 @bind-SelectedItems="@SelectedCustomers">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(CustomerModel.CusNo) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true" MaxResizableWidth="30"></GridCheckboxColumn>
+            <GridColumn Field=@nameof(CustomerModel.CusNo) Width="150px" MaxResizableWidth="150" Title="Mã khách hàng" ShowFilterCellButtons="false">
+                <Template>
+                    @{
+                        var model = (context as CustomerModel);
+                        <span class="h-link">@model!.CusNo</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(CustomerModel.FullName) Width="210px" Title="Tên khách hàng" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.PhoneNumber) Width="130px" Title="Số điện thoại" Filterable="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.Address) Width="170px" Title="Địa chỉ" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.Email) Width="140px" Title="Email" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.DateOfBirth) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE" Width="140px" Title="Ngày sinh" Filterable="false" />
+            <GridColumn Field=@nameof(CustomerModel.NoteForAll) Width="240px" Title="Ghi chú" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+        </GridColumns>
+    </TelerikGrid>
+</div>
