@@ -35,15 +35,15 @@
             <GridPagerSettings InputType="PagerInputType.Input" />
         </GridSettings>
         <GridAggregates>
-            <GridAggregate Field=@nameof(UserModel.Id) Aggregate="@GridAggregateType.Count" />
+            <GridAggregate Field=@nameof(UserModel.EmpNo) Aggregate="@GridAggregateType.Count" />
         </GridAggregates>
         <GridColumns>
             <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
-           <GridColumn Field=@nameof(UserModel.Id) Width="130px" MaxResizableWidth="150" Title="Mã tài khoản">
+           <GridColumn Field=@nameof(UserModel.EmpNo) Width="130px" MaxResizableWidth="150" Title="Mã tài khoản">
                 <Template>
                     @{
                         var model = (context as UserModel);
-                        <span class="h-link" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))" title="Xem chi tiết">@model!.Id</span>
+                        <span class="h-link" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))" title="Xem chi tiết">@model!.EmpNo</span>
                     }
                 </Template>
                 <FooterTemplate>
@@ -71,12 +71,12 @@
 <HDialog @bind-IsVisible="@IsShowDialog"
          SaveAndClosed="@(()=> SaveDataHandler())"
          Title="@(IsCreate ? "Thêm mới người dùng" : $"Cập nhật người dùng {UserUpdate!.UserName}")">
-    <EditForm EditContext="@_EditContext">
+    <EditForm EditContext="@_EditContext" autocomplete="off">
         <DataAnnotationsValidator />
         <div class="row row-gap-2 align-items-end mt-1">
             <div class="col-md-6 col-sm-12">
                 <HLabel Value="Mã người dùng:" />
-                 <TelerikNumericTextBox Enabled="false" Min="500"  Step="500" Format="@DefaultConstants.FORMAT_CURRENCY" @bind-Value="@UserUpdate.Id" Class="bh-link"  Id="txtId" />
+                <TelerikTextBox Enabled="false" @bind-Value="@UserUpdate.EmpNo" Class="bh-link" Id="txtId" />
             </div>
             <div class="col-md-6 col-sm-12">
                 <TelerikCheckBox @bind-Value="@UserUpdate.IsAdmin" Id="ckbIsAdmin" />

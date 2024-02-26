@@ -82,12 +82,18 @@ public class MasterDataService : IMasterDataService
                         response.Message = "Tên đăng nhập đã tồn tại!";
                         break;
                     }
-                    sqlParameters[0] = new SqlParameter("@Type", "Users");
-                    queryString = @"INSERT INTO [dbo].[Users]([UserName],[Password],[LastPassword],[FullName],[PhoneNumber] ,[Email] ,[Address],[DateOfBirth],[IsAdmin],[DateCreate] ,[UserCreate],[Isdelete],[Type] )
-                                                        values (@UserName , @Password , @LastPassword, @FullName, @PhoneNumber , @Email, @Address, @DateOfBirth, @IsAdmin, @DateTimeNow, @UserId, 0, 'Admin')";
+                    oUser.EmpNo = await getVoucherNo(nameof(EnumTable.Users));
+                    if (string.IsNullOrWhiteSpace(oUser.EmpNo))
+                    {
+                        response.StatusCode = (int)HttpStatusCode.NoContent;
+                        response.Message = "Không đánh được mã nhân viên!. Vui lòng kiểm tra lại";
+                        break;
+                    }
+                    queryString = @"INSERT INTO [dbo].[Users]([EmpNo],[UserName],[Password],[LastPassword],[FullName],[PhoneNumber] ,[Email] ,[Address],[DateOfBirth],[IsAdmin],[DateCreate] ,[UserCreate],[Isdelete])
+                                                        values (@EmpNo, @UserName , @Password , @LastPassword, @FullName, @PhoneNumber , @Email, @Address, @DateOfBirth, @IsAdmin, @DateTimeNow, @UserId, 0)";
 
                     string sPassword = EncryptHelper.Encrypt(oUser.Password + "");
-                    sqlParameters = new SqlParameter[11];
+                    sqlParameters = new SqlParameter[12];
                     sqlParameters[0] = new SqlParameter("@UserName", oUser.UserName);
                     sqlParameters[1] = new SqlParameter("@Password", sPassword);
                     sqlParameters[2] = new SqlParameter("@LastPassword", sPassword);
@@ -99,6 +105,7 @@ public class MasterDataService : IMasterDataService
                     sqlParameters[8] = new SqlParameter("@IsAdmin", oUser.IsAdmin);
                     sqlParameters[9] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
                     sqlParameters[10] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[11] = new SqlParameter("@EmpNo", oUser.EmpNo);
                     await ExecQuery();
                     break;
 
@@ -172,6 +179,7 @@ public class MasterDataService : IMasterDataService
             SqlParameter[] sqlParameters = new SqlParameter[1];
             sqlParameters[0] = new SqlParameter("@UserId", pUserid);
             data = await _context.GetDataAsync(@$"SELECT [Id]
+                                                  ,[EmpNo]
                                                   ,[UserName]
                                                   ,[Password]
                                                   ,[LastPassword]
@@ -213,6 +221,7 @@ public class MasterDataService : IMasterDataService
                               ,[UserName]
                               ,[FullName]
                               ,[IsAdmin]
+                              ,[EmpNo]
                               ,[Isdelete] as Isdeleted
                           FROM [dbo].[Users] t0 where ISNULL(t0.IsDelete,0) = 0
                           and t0.UserName = @UserName and t0.Password = @Password";
@@ -401,6 +410,7 @@ public class MasterDataService : IMasterDataService
     {
         UserModel user = new();
         if (!Convert.IsDBNull(record["Id"])) user.Id = Convert.ToInt32(record["Id"]);
+        if (!Convert.IsDBNull(record["EmpNo"])) user.EmpNo = Convert.ToString(record["EmpNo"]);
         if (!Convert.IsDBNull(record["UserName"])) user.UserName = Convert.ToString(record["UserName"]);
         if (!Convert.IsDBNull(record["Password"])) user.Password = Convert.ToString(record["Password"]);
         if (!Convert.IsDBNull(record["LastPassword"])) user.LastPassword = Convert.ToString(record["LastPassword"]);
@@ -459,6 +469,7 @@ public class MasterDataService : IMasterDataService
     {
         UserModel user = new();
         if (!Convert.IsDBNull(record["Id"])) user.Id = Convert.ToInt32(record["Id"]);
+        if (!Convert.IsDBNull(record["EmpNo"])) user.EmpNo = Convert.ToString(record["EmpNo"]);
         if (!Convert.IsDBNull(record["UserName"])) user.UserName = Convert.ToString(record["UserName"]);
         if (!Convert.IsDBNull(record["FullName"])) user.FullName = Convert.ToString(record["FullName"]);
         if (!Convert.IsDBNull(record["IsAdmin"])) user.IsAdmin = Convert.ToBoolean(record["IsAdmin"]);
@@ -569,7 +580,11 @@ public class MasterDataService : IMasterDataService
                         strNo = $"{strPretrix}{strNo}";
                     }
                     break;
-
+                case nameof(EnumTable.Users):
+                    // lấy mã
+                    int intId = await _context.ExecuteScalarAsync("select cast(isnull(max(EmpNo), '0') as int) + 1 from [dbo].[Users] with(nolock)");
+                    strNo = $"000000000{intId}".Substring($"000000000{intId}".Length - 9); // lấy 9 số cuối
+                    break;
                 default:
                     break;
             }

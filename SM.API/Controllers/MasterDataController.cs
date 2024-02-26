@@ -94,6 +94,7 @@ namespace SM.API.Controllers
                 var claims = new[]
                 {
                     new Claim("UserId", oUser.Id + ""),
+                    new Claim("EmpNo", oUser.EmpNo + ""),
                     new Claim("UserName", oUser.UserName + ""),
                     new Claim("FullName", oUser.FullName + ""),
                     new Claim("IsAdmin", oUser.IsAdmin + ""),

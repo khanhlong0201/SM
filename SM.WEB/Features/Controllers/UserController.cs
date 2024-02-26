@@ -115,6 +115,7 @@ public class UserController : SMControllerBase
             else
             {
                 UserUpdate.Id = pItemDetails!.Id;
+                UserUpdate.EmpNo = pItemDetails!.EmpNo;
                 UserUpdate.UserName = pItemDetails.UserName;
                 UserUpdate.FullName = pItemDetails.FullName;
                 UserUpdate.PhoneNumber = pItemDetails.PhoneNumber;

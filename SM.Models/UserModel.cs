@@ -6,6 +6,8 @@ public class UserModel : Auditable
 {
     public int Id { get; set; }
 
+    public string? EmpNo { get; set; }
+
     [Required(ErrorMessage = "Vui lòng điền Tên tài khoản")]
     public string? UserName { get; set; }
 

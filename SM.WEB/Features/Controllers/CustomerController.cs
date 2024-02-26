@@ -14,7 +14,6 @@ namespace SM.WEB.Features.Controllers
         #region Dependency Injection
         [Inject] private ILogger<CustomerController>? _logger { get; init; }
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
-        [Inject] private NavigationManager? _navManager { get; init; }
         #endregion
 
         #region Properties
