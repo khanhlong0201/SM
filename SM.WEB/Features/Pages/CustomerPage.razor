@@ -1,13 +1,40 @@
 ﻿@page "/customer"
 @inherits CustomerController
 
+<div class="h-content-filter">
+    <div class="row">
+        <div class="col-lg-5 col-md-6 col-sm-12">
+            <div class="d-flex mt-1">
+                <HLabel Value="Từ ngày/Đến ngày:" Style="width: 130px" />
+                <div style="width: calc(100% - 130px)">
+                    <div class="d-flex justify-content-between">
+                        <div style="width: 50%;">
+                            <TelerikDatePicker @bind-Value="@ItemSearch.FromDate"
+                                               Placeholder=""
+                                               Format="dd/MM/yyyy"
+                                               Class="btn-noborder-radius-left">
+                            </TelerikDatePicker>
+                        </div>
+                        <div style="width: 50%; margin-left: 2px;">
+                            <TelerikDatePicker @bind-Value="@ItemSearch.ToDate"
+                                               Placeholder=""
+                                               Format="dd/MM/yyyy"
+                                               Class="btn-noborder-radius-left">
+                            </TelerikDatePicker>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <TelerikToolBar Class="border-bottom-0">
-    <ToolBarButton ImageUrl="../assets/refresh.png">Làm mới</ToolBarButton>
-    <ToolBarButton ImageUrl="../assets/add-new-icon.png">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/remove_grid.png">Xóa dòng</ToolBarButton>
 </TelerikToolBar>
 
-<div class="h-table-content" style=" height: calc(100vh - 170px);">
+<div class="h-table-content" style=" height: calc(100vh - 210px);">
     <TelerikLoaderContainer OverlayThemeColor="light"
                             Visible="@(!IsInitialDataLoadComplete)"
                             Text="@null" Class="grid-initial-data-loader">
@@ -28,6 +55,7 @@
                  FilterMode="@GridFilterMode.FilterRow"
                  SelectionMode="@GridSelectionMode.Multiple"
                  ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
                  @bind-SelectedItems="@SelectedCustomers">
         <GridSettings>
             <GridPagerSettings InputType="PagerInputType.Input" />
@@ -54,6 +82,58 @@
             <GridColumn Field=@nameof(CustomerModel.Email) Width="140px" Title="Email" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
             <GridColumn Field=@nameof(CustomerModel.DateOfBirth) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE" Width="140px" Title="Ngày sinh" Filterable="false" />
             <GridColumn Field=@nameof(CustomerModel.NoteForAll) Width="240px" Title="Ghi chú" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.UserNameCreate) Width="140px" Title="Người tạo" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.DateCreate) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE" Width="140px" Title="Ngày tạo" Filterable="false" />
+            @*<GridColumn Field=@nameof(CustomerModel.UserNameUpdate) Width="140px" Title="Người cập nhật" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains" />
+            <GridColumn Field=@nameof(CustomerModel.DateUpdate) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE" Width="140px" Title="Ngày tạo" Filterable="false" />*@
         </GridColumns>
     </TelerikGrid>
 </div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         Width="70%"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới khách hàng" : $"Cập nhật khách hàng {CustomerUpdate!.CusNo}")">
+    <EditForm EditContext="@_EditContext">
+        <DataAnnotationsValidator />
+        <div>
+            <HLabel Value="Mã khách hàng:" />
+            <TelerikTextBox @bind-Value="@CustomerUpdate!.CusNo" Class="h-link" Enabled="false" />
+        </div>
+        <div class="mt-2">
+            <div class="row row-gap-2">
+                <div class="col-md-6 col-sm-12">
+                    <HLabel For="txtFullName" Value="Tên khách hàng:" IsRequired="true" />
+                    <TelerikTextBox @bind-Value="@CustomerUpdate.FullName" Id="txtFullName" />
+                    <HValidationTooltip ValidationFor="@(()=> CustomerUpdate.FullName)" Id="txtFullName" />
+                </div>
+                <div class="col-md-6 col-sm-12">
+                    <HLabel For="txtUserName" Value="Ngày sinh:" />
+                    <TelerikDatePicker @bind-Value="@CustomerUpdate.DateOfBirth"
+                                       Placeholder=""
+                                       Format="dd/MM/yyyy"
+                                       Class="btn-noborder-radius-left">
+                    </TelerikDatePicker>
+                </div>
+            </div>
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtPhoneNumber" Value="Số điện thoại:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@CustomerUpdate.PhoneNumber" Id="txtPhoneNumber" />
+            <HValidationTooltip ValidationFor="@(()=> CustomerUpdate.PhoneNumber)" Id="txtPhoneNumber" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtAddress" Value="Địa chỉ:" />
+            <TelerikTextBox @bind-Value="@CustomerUpdate.Address" Id="txtAddress" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtEmail" Value="Email:" />
+            <TelerikTextBox @bind-Value="@CustomerUpdate.Email" Id="txtEmail" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtNoteForAll" Value="Ghi chú:" />
+            <TelerikTextBox @bind-Value="@CustomerUpdate.NoteForAll" Id="txtNoteForAll" />
+        </div>
+
+    </EditForm>
+</HDialog>

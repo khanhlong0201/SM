@@ -1,15 +1,10 @@
-﻿using SM.API.Services;
-using SM.Models;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
+using SM.API.Services;
+using SM.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Image = SixLabors.ImageSharp.Image;
 
 namespace SM.API.Controllers
 {
@@ -17,7 +12,6 @@ namespace SM.API.Controllers
     [ApiController]
     public class MasterDataController : ControllerBase
     {
-        
         private readonly IMasterDataService _masterService;
         private ILogger<MasterDataController> _logger { get; set; }
         private readonly IConfiguration _configuration;
@@ -31,10 +25,9 @@ namespace SM.API.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
-       
         [HttpGet]
         [Route("GetUsers")]
-        public async Task<IActionResult> GetDataUsers(int pUserId=-1)
+        public async Task<IActionResult> GetDataUsers(int pUserId = -1)
         {
             try
             {
@@ -50,7 +43,6 @@ namespace SM.API.Controllers
                     ex.Message
                 });
             }
-
         }
 
         [HttpPost]
@@ -75,29 +67,29 @@ namespace SM.API.Controllers
                     StatusCode = StatusCodes.Status400BadRequest,
                     ex.Message
                 });
-
             }
         }
 
         [HttpPost]
         [Route("Login")]
-        public async Task<IActionResult> Login([FromBody]  LoginRequestModel loginRequest)
+        public async Task<IActionResult> Login([FromBody] LoginRequestModel loginRequest)
         {
             try
             {
                 var data = await _masterService.Login(loginRequest);
-                if (data == null || data.Count() ==0) 
-                return BadRequest(new {
-                    StatusCode = StatusCodes.Status400BadRequest,
-                    Message = "Tên đăng nhập hoặc mật khẩu không hợp lệ"
-                });
+                if (data == null || data.Count() == 0)
+                    return BadRequest(new
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = "Tên đăng nhập hoặc mật khẩu không hợp lệ"
+                    });
                 UserModel oUser = data.First();
-                if (oUser.IsDeleted == true )
-                return BadRequest(new
-                {
-                    StatusCode = StatusCodes.Status400BadRequest,
-                    Message = $"Tài khoản này đã bị xóa. Bạn hãy liên hệ Quản Trị Viên để nhận tài khoản khác !"
-                });
+                if (oUser.IsDeleted == true)
+                    return BadRequest(new
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest,
+                        Message = $"Tài khoản này đã bị xóa. Bạn hãy liên hệ Quản Trị Viên để nhận tài khoản khác !"
+                    });
 
                 var claims = new[]
                 {
@@ -126,8 +118,6 @@ namespace SM.API.Controllers
                     Message = "Success",
                     Token = new JwtSecurityTokenHandler().WriteToken(token) // token user
                 });
-
- 
             }
             catch (Exception ex)
             {
@@ -168,10 +158,27 @@ namespace SM.API.Controllers
                     StatusCode = StatusCodes.Status400BadRequest,
                     ex.Message
                 });
-
             }
         }
 
-
+        [HttpPost]
+        [Route("GetCustomers")]
+        public async Task<IActionResult> GetCustomers(SearchModel pSearch)
+        {
+            try
+            {
+                var data = await _masterService.GetCustomersAsync(pSearch);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetCustomers");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+        }
     }
 }

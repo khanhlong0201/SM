@@ -74,19 +74,6 @@ public class SearchModel
     public string? StatusId { get; set; }
     public bool IsAdmin { get; set; }
     public string? Type { get; set; }
-    public int KindBookId { get; set; }
-    public int PublisherId { get; set; }
-    public int AuthorId { get; set; }
-    public int BookId { get; set; }
-    public int BatchId { get; set; }
-    public int? PublishingYear { get; set; } // năm xuất bản
-    public string? KeyPrice { get; set; }
-    public string? KeyAcreage { get; set; }
-    public int Page { get; set; }
-    public int Limit { get; set; }
-    public string? TextSearch { get; set; }
-    public string? TypeBO { get; set; }
-    public bool IsShowPagination { get; set; }
 }
 
 public enum EnumType
@@ -101,7 +88,6 @@ public enum EnumType
 
 public enum EnumTable
 {
-
     @Users,
     @Customer
 }

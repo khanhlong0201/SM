@@ -1,31 +1,27 @@
-﻿using SM.API.Commons;
+﻿using Newtonsoft.Json;
+using SM.API.Commons;
 using SM.API.Infrastructure;
 using SM.Models;
 using SM.Models.Shared;
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using NPOI.POIFS.Crypt.Dsig;
-using SixLabors.ImageSharp;
 using System.Data;
 using System.Data.SqlClient;
-using System.Diagnostics;
 using System.Net;
-using System.Security.Policy;
-using Org.BouncyCastle.Asn1.Ocsp;
-using Org.BouncyCastle.Pqc.Crypto.Hqc;
 
 namespace SM.API.Services;
+
 public interface IMasterDataService
 {
     Task<IEnumerable<UserModel>> GetUsersAsync(int pUserId = -1);
+
     Task<ResponseModel> UpdateUsers(RequestModel pRequest);
+
     Task<IEnumerable<UserModel>> Login(LoginRequestModel pRequest);
+
     Task<ResponseModel> DeleteDataAsync(RequestModel pRequest);
+
     Task<ResponseModel> UpdateCustomerAsync(RequestModel pRequest);
 
-
+    Task<IEnumerable<CustomerModel>> GetCustomersAsync(SearchModel pSearch);
 }
 
 public class MasterDataService : IMasterDataService
@@ -34,6 +30,7 @@ public class MasterDataService : IMasterDataService
     private readonly IDateTimeService _dateTimeService;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly string _HOST_API;
+
     public MasterDataService(ISMDbContext context, IDateTimeService dateTimeService, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
@@ -49,6 +46,7 @@ public class MasterDataService : IMasterDataService
     }
 
     #region Public Funtions
+
     /// <summary>
     /// Thêm mới/Cập nhật thông tin người dùng
     /// </summary>
@@ -103,6 +101,7 @@ public class MasterDataService : IMasterDataService
                     sqlParameters[10] = new SqlParameter("@UserId", pRequest.UserId);
                     await ExecQuery();
                     break;
+
                 case nameof(EnumType.Update):
                     queryString = @"UPDATE [dbo].[Users]
                                    SET [UserName] = @UserName
@@ -129,6 +128,7 @@ public class MasterDataService : IMasterDataService
                     sqlParameters[9] = new SqlParameter("@UserName", oUser.UserName ?? (object)DBNull.Value);
                     await ExecQuery();
                     break;
+
                 case nameof(EnumType.@ChangePassWord):
                     queryString = @"Update [dbo].[Users]
                                     set Password = @PasswordNew, [DateUpdate] = @DateTimeNow, [UserUpdate] = @UserId
@@ -140,6 +140,7 @@ public class MasterDataService : IMasterDataService
                     sqlParameters[3] = new SqlParameter("@UserId", pRequest.UserId);
                     await ExecQuery();
                     break;
+
                 default:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     response.Message = "Không xác định được phương thức!";
@@ -229,6 +230,39 @@ public class MasterDataService : IMasterDataService
         return data;
     }
 
+    /// <summary>
+    /// lấy danh sách Khách hàng theo chi nhánh
+    /// </summary>
+    /// <param name="pBranchId"></param>
+    /// <returns></returns>
+    public async Task<IEnumerable<CustomerModel>> GetCustomersAsync(SearchModel pSearch)
+    {
+        IEnumerable<CustomerModel> data;
+        try
+        {
+            await _context.Connect();
+            data = await _context.GetDataAsync(@$"select [CusNo], T0.[FullName], T0.[PhoneNumber], T0.[Email], T0.[Address], T0.[DateOfBirth]
+                      ,T0.[NoteForAll],T0.[DateCreate],T0.[UserCreate],T0.[DateUpdate],T0.[UserUpdate]
+					  ,T1.FullName as [UserNameCreate], T2.FullName as [UserNameUpdate]
+			     from [dbo].[Customers] as T0 with(nolock)
+		    left join [dbo].[Users] as T1 with(nolock) on T0.UserCreate = T1.Id
+			left join [dbo].[Users] as T2 with(nolock) on T0.UserUpdate = T2.Id
+					where T0.[IsDelete] = 0 order by [CusNo] desc"
+                    , DataRecordToCustomerModel, commandType: CommandType.Text);
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
+
+    /// <summary>
+    /// cập nhật thông tin khách hàng
+    /// </summary>
+    /// <param name="pRequest"></param>
+    /// <returns></returns>
     public async Task<ResponseModel> UpdateCustomerAsync(RequestModel pRequest)
     {
         ResponseModel response = new ResponseModel();
@@ -238,20 +272,11 @@ public class MasterDataService : IMasterDataService
             string queryString = "";
             CustomerModel oCustomer = JsonConvert.DeserializeObject<CustomerModel>(pRequest.Json + "")!;
             SqlParameter[] sqlParameters;
-            async Task ExecQuery()
-            {
-                var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
-                if (data != null && data.Rows.Count > 0)
-                {
-                    response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
-                    response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
-                }
-            }
             switch (pRequest.Type)
             {
                 case nameof(EnumType.Add):
                     oCustomer.CusNo = await getVoucherNo(nameof(EnumTable.Customer));
-                    if(string.IsNullOrWhiteSpace(oCustomer.CusNo))
+                    if (string.IsNullOrWhiteSpace(oCustomer.CusNo))
                     {
                         response.StatusCode = (int)HttpStatusCode.NoContent;
                         response.Message = "Không đánh được mã Khách hàng!. Vui lòng kiểm tra lại";
@@ -259,18 +284,42 @@ public class MasterDataService : IMasterDataService
                     }
                     sqlParameters = getCustomerParams(oCustomer, pRequest.UserId);
                     queryString = @"Insert into [dbo].[Customers] ([CusNo],[FullName],[PhoneNumber],[Email]
-                                    ,[Address],[DateOfBirth],[NoteForAll],[DateCreate],[UserCreate],[IsDelete]) 
+                                    ,[Address],[DateOfBirth],[NoteForAll],[DateCreate],[UserCreate],[IsDelete])
                                     values (@CusNo, @FullName, @PhoneNumber, @Email
                                     ,@Address, @DateOfBirth, @NoteForAll, @DateTimeNow, @UserId, 0)";
-                    await ExecQuery();
                     break;
+
                 case nameof(EnumType.Update):
+                    // Kiểm tra dữ liệu trước khi cập nhật
+                    queryString = "select count(*) from [dbo].[Customers] as T0 with(nolock) where [CusNo] = @CusNo and [IsDelete] = 0";
+                    sqlParameters = new SqlParameter[1];
+                    sqlParameters[0] = new SqlParameter("@CusNo", oCustomer.CusNo);
+                    int count = await _context.ExecuteScalarAsync(queryString, sqlParameters);
+                    if(count <=0)
+                    {
+                        response.StatusCode = (int)HttpStatusCode.NoContent;
+                        response.Message = "Không tìm thấy thông tin khách hàng. Vui lòng kiểm tra lại!";
+                        return response;
+                    }    
+                    queryString = @"Update [dbo].[Customers]
+                                       set [FullName] = @FullName , [PhoneNumber] = @PhoneNumber, [Email] = @Email
+                                         , [NoteForAll] = @NoteForAll, [Address] = @Address , [DateOfBirth] = @DateOfBirth
+                                         , [DateUpdate] = @DateTimeNow, [UserUpdate] = @UserId
+                                     where [CusNo] = @CusNo";
+                    sqlParameters = getCustomerParams(oCustomer, pRequest.UserId);
                     break;
+
                 default:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     response.Message = "Không xác định được phương thức!";
-                    break;
-            }    
+                    return response;
+            }
+            var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+            if (data != null && data.Rows.Count > 0)
+            {
+                response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+            }
         }
         catch (Exception ex)
         {
@@ -319,6 +368,7 @@ public class MasterDataService : IMasterDataService
                     //}
                     response = await deleteDataAsync(nameof(EnumTable.Users), queryString, sqlParameters);
                     break;
+
                 default:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
                     response.Message = "Không xác định được phương thức!";
@@ -337,9 +387,11 @@ public class MasterDataService : IMasterDataService
         }
         return response;
     }
-    #endregion Public Functions
+
+    #endregion Public Funtions
 
     #region Private Funtions
+
     /// <summary>
     /// đọc danh sách Users
     /// </summary>
@@ -375,7 +427,7 @@ public class MasterDataService : IMasterDataService
         try
         {
             await _context.BeginTranAsync();
-            string queryString = @$"UPDATE [dbo].[{pTableName}] 
+            string queryString = @$"UPDATE [dbo].[{pTableName}]
                                 set [IsDelete] = 1, [ReasonDelete] = @ReasonDelete, [DateUpdate] = @DateTimeNow, [UserUpdate] = @UserId
                                 where {pCondition}";
 
@@ -414,6 +466,29 @@ public class MasterDataService : IMasterDataService
         return user;
     }
 
+    /// <summary>
+    /// đọc danh sách Customers
+    /// </summary>
+    /// <param name="record"></param>
+    /// <returns></returns>
+    private CustomerModel DataRecordToCustomerModel(IDataRecord record)
+    {
+        CustomerModel model = new();
+        if (!Convert.IsDBNull(record["CusNo"])) model.CusNo = Convert.ToString(record["CusNo"]);
+        if (!Convert.IsDBNull(record["FullName"])) model.FullName = Convert.ToString(record["FullName"]);
+        if (!Convert.IsDBNull(record["PhoneNumber"])) model.PhoneNumber = Convert.ToString(record["PhoneNumber"]);
+        if (!Convert.IsDBNull(record["Email"])) model.Email = Convert.ToString(record["Email"]);
+        if (!Convert.IsDBNull(record["Address"])) model.Address = Convert.ToString(record["Address"]);
+        if (!Convert.IsDBNull(record["DateOfBirth"])) model.DateOfBirth = Convert.ToDateTime(record["DateOfBirth"]);
+        if (!Convert.IsDBNull(record["NoteForAll"])) model.NoteForAll = Convert.ToString(record["NoteForAll"]);
+        if (!Convert.IsDBNull(record["DateCreate"])) model.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+        if (!Convert.IsDBNull(record["UserCreate"])) model.UserCreate = Convert.ToInt32(record["UserCreate"]);
+        if (!Convert.IsDBNull(record["DateUpdate"])) model.DateUpdate = Convert.ToDateTime(record["DateUpdate"]);
+        if (!Convert.IsDBNull(record["UserUpdate"])) model.UserUpdate = Convert.ToInt32(record["UserUpdate"]);
+        if (!Convert.IsDBNull(record["UserNameCreate"])) model.UserNameCreate = Convert.ToString(record["UserNameCreate"]);
+        if (!Convert.IsDBNull(record["UserNameUpdate"])) model.UserNameUpdate = Convert.ToString(record["UserNameUpdate"]);
+        return model;
+    }
 
     /// <summary>
     /// lấy kết quả báo cáo
@@ -450,7 +525,7 @@ public class MasterDataService : IMasterDataService
         SqlParameter[] sqlParameters = new SqlParameter[9];
         sqlParameters[0] = new SqlParameter("@CusNo", oCustomer.CusNo);
         sqlParameters[1] = new SqlParameter("@FullName", oCustomer.FullName);
-        sqlParameters[2] = new SqlParameter("@Phone1", oCustomer.PhoneNumber ?? (object)DBNull.Value);
+        sqlParameters[2] = new SqlParameter("@PhoneNumber", oCustomer.PhoneNumber ?? (object)DBNull.Value);
         sqlParameters[3] = new SqlParameter("@Email", oCustomer.Email ?? (object)DBNull.Value);
         sqlParameters[4] = new SqlParameter("@Address", oCustomer.Address ?? (object)DBNull.Value);
         sqlParameters[5] = new SqlParameter("@DateOfBirth", oCustomer.DateOfBirth ?? (object)DBNull.Value);
@@ -468,34 +543,46 @@ public class MasterDataService : IMasterDataService
     private async Task<string> getVoucherNo(string pTable = nameof(EnumTable.Customer))
     {
         string strNo = "";
-        string strPretrix = "";
-        string queryString = "";
-        //DateTime getdate = _dateTimeService.GetCurrentVietnamTime();
-        DateTime getdate = new DateTime(2024,01,01);
-        switch (pTable)
+        try
         {
-            case nameof(EnumTable.Customer):
-                string strMonth = $"0{getdate.Day}".Substring($"0{getdate.Day}".Length - 2);
-                strPretrix = $"KH-{(getdate.Year + "").Substring(2)}{strMonth}-";
-                queryString = @$"select top 1 CusNo  from [dbo].[Customers] with(nolock) 
+            string strPretrix = "";
+            string queryString = "";
+            //DateTime getdate = _dateTimeService.GetCurrentVietnamTime();
+            DateTime getdate = new DateTime(2024, 01, 01);
+            switch (pTable)
+            {
+                case nameof(EnumTable.Customer):
+                    string strMonth = $"0{getdate.Day}".Substring($"0{getdate.Day}".Length - 2);
+                    strPretrix = $"KH-{(getdate.Year + "").Substring(2)}{strMonth}-";
+                    queryString = @$"select top 1 CusNo  from [dbo].[Customers] with(nolock)
                                   where CusNo like '%{strPretrix}%' order by CusNo desc";
-                // lấy mã
-                strNo = Convert.ToString(await _context.ExecuteScalarObjectAsync(queryString)) + "";
-                if(string.IsNullOrWhiteSpace(strNo))
-                {
-                    strNo = $"{strPretrix}00001";
-                }  
-                else
-                {
-                    int iMax = int.Parse(strNo.Substring(strPretrix.Length - 5)) + 1; // tăng 1 đơn vị
-                    strNo = $"00000{iMax}".Substring($"00000{iMax}".Length - 5);
-                    strNo = $"{strPretrix}{strNo}";
-                }    
-                break;
-            default:
-                break;
-        }    
+                    // lấy mã
+                    strNo = Convert.ToString(await _context.ExecuteScalarObjectAsync(queryString)) + "";
+                    if (string.IsNullOrWhiteSpace(strNo))
+                    {
+                        strNo = $"{strPretrix}00001";
+                    }
+                    else
+                    {
+                        int iMax = int.Parse(strNo.Substring(strNo.Length - 5)) + 1; // tăng 1 đơn vị
+                        strNo = $"00000{iMax}".Substring($"00000{iMax}".Length - 5);
+                        strNo = $"{strPretrix}{strNo}";
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        catch(Exception ex)
+        {
+            strNo = "";
+            #pragma warning disable CA2200 // Rethrow to preserve stack details
+            throw ex;
+            #pragma warning restore CA2200 // Rethrow to preserve stack details
+        }
         return strNo;
     }
+
     #endregion Private Funtions
 }
