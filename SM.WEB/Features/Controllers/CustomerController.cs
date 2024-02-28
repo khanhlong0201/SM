@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Components.Forms;
 using Newtonsoft.Json;
 using SM.Models;
+using SM.WEB.Commons;
+using SM.WEB.Components;
 using SM.WEB.Models;
 using SM.WEB.Services;
 using SM.WEB.Shared;
@@ -14,6 +16,7 @@ namespace SM.WEB.Features.Controllers
         #region Dependency Injection
         [Inject] private ILogger<CustomerController>? _logger { get; init; }
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
+        public HConfirm? _rDialogs { get; set; }
         #endregion
 
         #region Properties
@@ -81,6 +84,35 @@ namespace SM.WEB.Features.Controllers
         #endregion
 
         #region Protected Functions
+        protected async void DeleteDataHandler()
+        {
+            try
+            {
+                if (SelectedCustomers == null || !SelectedCustomers.Any())
+                {
+                    ShowWarning(DefaultConstants.MESSAGE_NO_CHOSE_DATA);
+                    return;
+                }
+                var confirm = await _rDialogs!.ConfirmAsync($" {DefaultConstants.MESSAGE_CONFIRM_DELETE} ");
+                if (!confirm) return;
+                await ShowLoader();
+                bool isSuccess = await _masterDataService!.DeleteDataAsync(nameof(EnumTable.@Customers), "", string.Join(",", SelectedCustomers.Select(m => m.CusNo)), pUserId);
+                if (isSuccess)
+                {
+                    await getDataCustomers();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "UserController", "DeleteDataHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                await ShowLoader(false);
+                await InvokeAsync(StateHasChanged);
+            }
+        }
         protected async void ReLoadDataHandler()
         {
             try
