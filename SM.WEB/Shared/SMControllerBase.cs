@@ -23,9 +23,7 @@ public class SMControllerBase : ComponentBase
 
     public int pUserId { get; set; }
     public bool pIsAdmin { get; set; }
-    public string pBranchId { get; set; } = "";
     public string FullName { get; set; } = "";
-    public string pBranchName { get; set; } = "";
     #endregion Properties
 
     protected override async Task OnInitializedAsync()
@@ -49,10 +47,8 @@ public class SMControllerBase : ComponentBase
                 if (oUser != null)
                 {
                     pUserId = int.Parse(oUser.User.Claims.FirstOrDefault(m => m.Type == "UserId")?.Value + "");
-                    pBranchId = oUser.User.Claims.FirstOrDefault(m => m.Type == "BranchId")?.Value + "";
                     pIsAdmin = oUser.User.Claims.FirstOrDefault(m => m.Type == "IsAdmin")?.Value?.ToUpper() == "TRUE";
                     FullName = oUser.User.Claims.FirstOrDefault(m => m.Type == "FullName")?.Value + "";
-                    pBranchName = oUser.User.Claims.FirstOrDefault(m => m.Type == "BranchName")?.Value + "";
                 }
             }
             catch (Exception) { }

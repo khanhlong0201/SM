@@ -1,5 +1,105 @@
 ﻿@page "/"
 @page "/index"
+@inherits IndexController
+
+<div class="h-content-filter">
+    <div class="container-xl">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-12 position-relative text-center">
+                        <img src="../assets/SM.png" width="110" height="32" alt="HSystem" style="width: 60px; height: 60px" class="position-absolute navbar-brand-image">
+                        <p class="h2 mb-1">Công Ty TNHH Sản Xuất Cơ Khí Việt Thành</p>
+                        <p class="h3 mb-1">Bộ Phận Bán Hàng</p>
+                    </div>
+                    <div class="col-12 my-1 text-end">
+                        <p class="h3 mb-1">Ngày @ItemFilter.CurDate.ToString(DefaultConstants.FORMAT_DATE)</p>
+                    </div>
+                    <div class="col-12 my-1">
+                        <div class="table-responsive">
+                            <table class="table table-vcenter table-bordered table-nowrap">
+                                <tbody>
+                                    <tr class="bg-light">
+                                        <th class="subheader text-center" style="font-size: 11px">Nhân viên</th>
+                                        <th class="subheader text-center" style="font-size: 11px">Khách hàng liên hệ</th>
+                                        <th class="subheader text-center" style="font-size: 11px">Khách đã mua hàng</th>
+                                    </tr>
+                                    <tr>
+                                        <td class="w-33">
+                                            <div class="text-center display-6 fw-bold my-2">@(ListUsers?.Count ?? 0)</div>
+                                        </td>
+                                        <td class="w-33">
+                                            <div class="text-center display-6 fw-bold my-2">@(ListCustomers?.Count ?? 0)</div>
+                                        </td>
+                                        <td class="w-33">
+                                            <div class="text-center display-6 fw-bold my-2">@(ListCustomers?.Count ?? 0)</div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <div class="text-wrap">
+                                                @if(pIsAdmin)
+                                                {
+                                                    <div class="mb-1">
+                                                        <i class="fa-solid fa-magnifying-glass" 
+                                                            style="font-size: 17px; cursor: pointer;" 
+                                                            title="Chọn nhân viên" @onclick="@(()=> IsShowDialogEmp = true)"></i>
+                                                    </div>
+                                                }
+                                                <div class="mb-1">
+                                                    Nhân viên: <strong>@CurUser.EmpNo - @CurUser.FullName</strong>
+                                                </div>
+                                                <div class="mb-1">
+                                                    SĐT: <strong>@CurUser.PhoneNumber</strong>
+                                                </div>
+                                                <div>
+                                                    Email: <strong>@CurUser.Email</strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialogEmp">
+    <TelerikGrid Data="@ListUsers"
+                 Height="100%"
+                 Width="350px"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterRow"
+                 SelectionMode="@GridSelectionMode.Single"
+                 ScrollMode="@GridScrollMode.Scrollable">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(UserModel.EmpNo) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridColumn Field=@nameof(UserModel.EmpNo) Width="150px" MaxResizableWidth="150" Title="Mã khách hàng" ShowFilterCellButtons="false">
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(UserModel.FullName) Width="270px" Title="Tên khách hàng" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains" />
+            <GridColumn Field=@nameof(UserModel.PhoneNumber) Width="140px" Title="Số điện thoại" Filterable="false" DefaultFilterOperator="@FilterOperator.Contains" />
+            <GridColumn Field=@nameof(UserModel.Email) Width="170px" Title="Email" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains" />
+            <GridColumn Field=@nameof(UserModel.Address) Width="210px" Title="Địa chỉ" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains" />
+        </GridColumns>
+    </TelerikGrid>
+</HDialog>
+
 
 
 

@@ -74,6 +74,8 @@ public class SearchModel
     public string? StatusId { get; set; }
     public bool IsAdmin { get; set; }
     public string? Type { get; set; }
+    public DateTime CurDate { get; set; }
+    public string? EmpNo { get; set; }
 }
 
 public enum EnumType
