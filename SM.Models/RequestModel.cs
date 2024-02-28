@@ -89,7 +89,7 @@ public enum EnumType
 public enum EnumTable
 {
     @Users,
-    @Customer
+    @Customers
 }
 
 public enum DocStatus

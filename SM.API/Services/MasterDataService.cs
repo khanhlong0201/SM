@@ -284,7 +284,7 @@ public class MasterDataService : IMasterDataService
             switch (pRequest.Type)
             {
                 case nameof(EnumType.Add):
-                    oCustomer.CusNo = await getVoucherNo(nameof(EnumTable.Customer));
+                    oCustomer.CusNo = await getVoucherNo(nameof(EnumTable.@Customers));
                     if (string.IsNullOrWhiteSpace(oCustomer.CusNo))
                     {
                         response.StatusCode = (int)HttpStatusCode.NoContent;
@@ -376,6 +376,25 @@ public class MasterDataService : IMasterDataService
                     //    return response;
                     //}
                     response = await deleteDataAsync(nameof(EnumTable.Users), queryString, sqlParameters);
+                    break;
+                case nameof(EnumTable.@Customers):
+                    // kiểm tra điều kiện trước khi xóa
+                    //
+                    queryString = "[CusNo] in ( select value from STRING_SPLIT(@ListIds, ',') ) and [IsDelete] = 0";
+                    sqlParameters = new SqlParameter[4];
+                    sqlParameters[0] = new SqlParameter("@ReasonDelete", pRequest.JsonDetail ?? (object)DBNull.Value);
+                    sqlParameters[1] = new SqlParameter("@ListIds", pRequest.Json); // "1,2,3,4"
+                    sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+
+                    //responseCheck = await CheckKeyBindingBeforeDeleting(pRequest);
+                    //if (responseCheck != null && responseCheck.StatusCode == -1)
+                    //{
+                    //    response.StatusCode = -1;
+                    //    response.Message = responseCheck.Message;
+                    //    return response;
+                    //}
+                    response = await deleteDataAsync(nameof(EnumTable.@Customers), queryString, sqlParameters);
                     break;
 
                 default:
@@ -551,7 +570,7 @@ public class MasterDataService : IMasterDataService
     /// </summary>
     /// <param name="pTable"></param>
     /// <returns></returns>
-    private async Task<string> getVoucherNo(string pTable = nameof(EnumTable.Customer))
+    private async Task<string> getVoucherNo(string pTable = nameof(EnumTable.@Customers))
     {
         string strNo = "";
         try
@@ -562,7 +581,7 @@ public class MasterDataService : IMasterDataService
             DateTime getdate = new DateTime(2024, 01, 01);
             switch (pTable)
             {
-                case nameof(EnumTable.Customer):
+                case nameof(EnumTable.@Customers):
                     string strMonth = $"0{getdate.Day}".Substring($"0{getdate.Day}".Length - 2);
                     strPretrix = $"KH-{(getdate.Year + "").Substring(2)}{strMonth}-";
                     queryString = @$"select top 1 CusNo  from [dbo].[Customers] with(nolock)
