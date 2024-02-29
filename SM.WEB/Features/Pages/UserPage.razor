@@ -6,6 +6,7 @@
     <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
     <ToolBarButton ImageUrl="../assets/remove_grid.png" OnClick="@DeleteDataHandler">Xóa dòng</ToolBarButton>
+     <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@(async () => await GridRef.SaveAsExcelFileAsync())">Xuất excel</ToolBarButton>
 </TelerikToolBar>
 <div class="h-table-content" style=" height: calc(100vh - 170px);">
     <TelerikLoaderContainer OverlayThemeColor="light"
@@ -19,6 +20,7 @@
     </TelerikLoaderContainer>
 
     <TelerikGrid Data="@ListUsers"
+                 @ref="@GridRef"   
                  Height="100%"
                  Width="100%"
                  RowHeight="25"

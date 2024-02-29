@@ -17,6 +17,7 @@ namespace SM.WEB.Features.Controllers
         [Inject] private ILogger<CustomerController>? _logger { get; init; }
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
         public HConfirm? _rDialogs { get; set; }
+        public TelerikGrid<CustomerModel> GridRef { get; set; }
         #endregion
 
         #region Properties
@@ -80,6 +81,7 @@ namespace SM.WEB.Features.Controllers
             ListCustomers = new List<CustomerModel>();
             SelectedCustomers = new List<CustomerModel>();
             ListCustomers = await _masterDataService!.GetCustomersAsync(ItemSearch);
+            GridRef?.Rebind();
         }
         #endregion
 

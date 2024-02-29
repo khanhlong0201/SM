@@ -16,6 +16,7 @@ public class UserController : SMControllerBase
     #region Dependency Injection
     [Inject] private ILogger<UserController>? _logger { get; init; }
     [Inject] private ICliMasterDataService? _masterDataService { get; init; }
+    public TelerikGrid<UserModel> GridRef { get; set; }
     #endregion
 
     #region Properties
@@ -78,6 +79,7 @@ public class UserController : SMControllerBase
         ListUsers = new List<UserModel>();
         SelectedUsers = new List<UserModel>();
         ListUsers = await _masterDataService!.GetDataUsersAsync();
+        GridRef?.Rebind();
     }
 
     #endregion
