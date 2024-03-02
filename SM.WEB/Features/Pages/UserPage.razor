@@ -62,10 +62,8 @@
                     }
                 </Template>
             </GridColumn>
-            <GridColumn Field=@nameof(UserModel.PhoneNumber) Width="140px" Title="Số điện thoại"></GridColumn>
-            <GridColumn Field=@nameof(UserModel.Address) Width="240px" Title="Địa chỉ"></GridColumn>
-            <GridColumn Field=@nameof(UserModel.Email) Width="120px" Title="Email"></GridColumn>
-            <GridColumn Field=@nameof(UserModel.DateOfBirth) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE" Width="140px" Title="Ngày sinh"></GridColumn>
+            <GridColumn Field=@nameof(UserModel.Email) Width="140px" Title="Số điện thoại/Email"></GridColumn>
+            <GridColumn Field=@nameof(UserModel.DepartmentName) Width="120px" Title="Bộ phận"></GridColumn>
         </GridColumns>
     </TelerikGrid>
 </div>
@@ -118,29 +116,29 @@
         } 
         
         <div class="row row-gap-2 mt-2">
-            <div class="col-md-6 col-sm-12">
-                <HLabel For="txtPhoneNumber" Value="Số điện thoại:" />
-                <TelerikTextBox @bind-Value="@UserUpdate.PhoneNumber" Id="txtPhoneNumber" />
-            </div>
-            <div class="col-md-6 col-sm-12">
-                <HLabel For="txtEmail" Value="Email:" />
+            <div class="col-md-12 col-sm-12">
+                <HLabel For="txtEmail" Value="Số điện thoại/Email:" />
                 <TelerikTextBox @bind-Value="@UserUpdate.Email" Id="txtEmail" />
             </div>
         </div>
         <div class="mt-2">
-            <HLabel For="txtAddress" Value="Địa chỉ:" />
-            <TelerikTextBox @bind-Value="@UserUpdate.Address" Id="txtAddress" />
+            <HLabel For="txtNoteForAll" Value="Bộ phận:" />
+             <TelerikComboBox Data="@ListDepartments"
+                  ValueChanged="@((int departmentId) => SelectedDepartmentChanged(departmentId))"
+                Value="@UserUpdate.DepartmentId"
+                ValueExpression="@(() => UserUpdate.DepartmentId)"
+                Placeholder="Chọn bộ phận"
+                TextField="@nameof(DepartmentModel.DepartmentName)"
+                ValueField="@nameof(DepartmentModel.DepartmentId)"
+                Filterable="true" 
+                ClearButton="false"
+                Id="cbProduct"
+                Class="btn-noborder-radius-left"
+                Width="100%">
+            </TelerikComboBox>
+            <HValidationTooltip ValidationFor="@(()=> UserUpdate.DepartmentId)" Id="cbProduct" />
         </div>
-        <div class="mt-2 row">
-            <div class="col-6">
-                <HLabel For="txtUserName" Value="Ngày sinh:" />
-                <TelerikDatePicker @bind-Value="@UserUpdate.DateOfBirth"
-                    Placeholder=""
-                    Format="dd/MM/yyyy"
-                    Class="btn-noborder-radius-left">
-                </TelerikDatePicker>
-            </div>
-        </div>
+       
     </EditForm>
 </HDialog>
 

@@ -11,25 +11,23 @@ using Newtonsoft.Json;
 using Telerik.Blazor.Components;
 
 namespace SM.WEB.Features.Controllers;
-public class UserController : SMControllerBase
+public class DepartmentController : SMControllerBase
 {
     #region Dependency Injection
-    [Inject] private ILogger<UserController>? _logger { get; init; }
+    [Inject] private ILogger<DepartmentController>? _logger { get; init; }
     [Inject] private ICliMasterDataService? _masterDataService { get; init; }
-    public TelerikGrid<UserModel> GridRef { get; set; }
+    public TelerikGrid<DepartmentModel> GridRef { get; set; }
     #endregion
 
     #region Properties
     public bool IsInitialDataLoadComplete { get; set; } = true;
-    public List<UserModel>? ListUsers { get; set; }
-    public IEnumerable<UserModel>? SelectedUsers { get; set; } = new List<UserModel>();
-    public UserModel UserUpdate { get; set; } = new UserModel();
+    public List<DepartmentModel>? ListDepartments { get; set; }
+    public IEnumerable<DepartmentModel>? SelectedDepartments { get; set; } = new List<DepartmentModel>();
+    public DepartmentModel DepartmentUpdate { get; set; } = new DepartmentModel();
     public EditContext? _EditContext { get; set; }
     public bool IsShowDialog { get; set; }
     public bool IsCreate { get; set; } = true;
     public HConfirm? _rDialogs { get; set; }
-    public List<DepartmentModel>? ListDepartments { get; set; } = new List<DepartmentModel>();
-    public DepartmentModel DepartmentUpdate { get; set; } = new DepartmentModel();
     #endregion
 
     #region Override Functions
@@ -41,7 +39,7 @@ public class UserController : SMControllerBase
             ListBreadcrumbs = new List<BreadcrumbModel>
                 {
                     new BreadcrumbModel() { Text = "Trang chủ", IsShowIcon = true, Icon = "fa-solid fa-house-chimney" },
-                    new BreadcrumbModel() { Text = "Nhân viên" }
+                    new BreadcrumbModel() { Text = "Bộ phận" }
                 };
             await NotifyBreadcrumb.InvokeAsync(ListBreadcrumbs);
         }
@@ -59,7 +57,7 @@ public class UserController : SMControllerBase
             try
             {
                 await _progressService!.SetPercent(0.4);
-                await getDataUsers();
+                await getDataDepartments();
             }
             catch (Exception ex)
             {
@@ -76,11 +74,11 @@ public class UserController : SMControllerBase
     #endregion
 
     #region Private Functions
-    private async Task getDataUsers()
+    private async Task getDataDepartments()
     {
-        ListUsers = new List<UserModel>();
-        SelectedUsers = new List<UserModel>();
-        ListUsers = await _masterDataService!.GetDataUsersAsync();
+        ListDepartments = new List<DepartmentModel>();
+        SelectedDepartments = new List<DepartmentModel>();
+        ListDepartments = await _masterDataService!.GetDataDepartmentsAsync();
         GridRef?.Rebind();
     }
 
@@ -93,11 +91,11 @@ public class UserController : SMControllerBase
         try
         {
             IsInitialDataLoadComplete = false;
-            await getDataUsers();
+            await getDataDepartments();
         }
         catch (Exception ex)
         {
-            _logger!.LogError(ex, "UserController", "ReLoadDataHandler");
+            _logger!.LogError(ex, "DepartmentController", "ReLoadDataHandler");
             ShowError(ex.Message);
         }
         finally
@@ -107,45 +105,29 @@ public class UserController : SMControllerBase
         }
     }
 
-    protected async Task OnOpenDialogHandler(EnumType pAction = EnumType.Add, UserModel? pItemDetails = null)
+    protected void OnOpenDialogHandler(EnumType pAction = EnumType.Add, DepartmentModel? pItemDetails = null)
     {
         try
         {
-            ListDepartments = await _masterDataService.GetDataDepartmentsAsync();
-            if (ListDepartments == null || ListDepartments.Count == 0)
-            {
-                ListDepartments = new List<DepartmentModel>();
-
-            }
             if (pAction == EnumType.Add)
             {
                 IsCreate = true;
-                UserUpdate = new UserModel();
+                DepartmentUpdate = new DepartmentModel();
             }
             else
             {
-                UserUpdate.Id = pItemDetails!.Id;
-                UserUpdate.EmpNo = pItemDetails!.EmpNo;
-                UserUpdate.UserName = pItemDetails.UserName;
-                UserUpdate.FullName = pItemDetails.FullName;
-                UserUpdate.PhoneNumber = pItemDetails.PhoneNumber;
-                UserUpdate.Email = pItemDetails.Email;
-                UserUpdate.Address = pItemDetails.Address;
-                UserUpdate.Password = EncryptHelper.Decrypt(pItemDetails.Password + "");
-                UserUpdate.ReEnterPassword = UserUpdate.Password;
-                UserUpdate.DateOfBirth = pItemDetails.DateOfBirth;;
-                UserUpdate.IsAdmin = pItemDetails.IsAdmin;
-                UserUpdate.DateCreate = pItemDetails.DateCreate;
-                UserUpdate.UserCreate = pItemDetails.UserCreate;
-                UserUpdate.DepartmentId = pItemDetails.DepartmentId;
+                DepartmentUpdate.DepartmentId = pItemDetails!.DepartmentId;
+                DepartmentUpdate.DepartmentName = pItemDetails!.DepartmentName; 
+                DepartmentUpdate.DateCreate = pItemDetails.DateCreate;
+                DepartmentUpdate.UserCreate = pItemDetails.UserCreate;
                 IsCreate = false;
             }
             IsShowDialog = true;
-            _EditContext = new EditContext(UserUpdate);
+            _EditContext = new EditContext(DepartmentUpdate);
         }
         catch (Exception ex)
         {
-            _logger!.LogError(ex, "UserController", "OnOpenDialogHandler");
+            _logger!.LogError(ex, "DepartmentController", "OnOpenDialogHandler");
             ShowError(ex.Message);
         }
     }
@@ -157,23 +139,18 @@ public class UserController : SMControllerBase
             string sAction = IsCreate ? nameof(EnumType.Add) : nameof(EnumType.Update);
             var checkData = _EditContext!.Validate();
             if (!checkData) return;
-            if(UserUpdate.Password +"" != UserUpdate.ReEnterPassword + "")
-            {
-                ShowWarning("Nhập lại mật khẩu không đúng so với mật khẩu! Vui lòng nhập lại.");
-                return;
-            }
             await ShowLoader();
-            bool isSuccess = await _masterDataService!.UpdateUserAsync(JsonConvert.SerializeObject(UserUpdate), sAction, pUserId);
+            bool isSuccess = await _masterDataService!.UpdateDepartmentAsync(JsonConvert.SerializeObject(DepartmentUpdate), sAction, pUserId);
             if (isSuccess)
             {
-                await getDataUsers();
+                await getDataDepartments();
                 IsShowDialog = false;
                 return;
             }
         }
         catch (Exception ex)
         {
-            _logger!.LogError(ex, "UserController", "SaveDataHandler");
+            _logger!.LogError(ex, "DepartmentController", "SaveDataHandler");
             ShowError(ex.Message);
         }
         finally
@@ -182,13 +159,13 @@ public class UserController : SMControllerBase
             await InvokeAsync(StateHasChanged);
         }
     }
-    protected void OnRowDoubleClickHandler(GridRowClickEventArgs args) => OnOpenDialogHandler(EnumType.Update, args.Item as UserModel);
+    protected void OnRowDoubleClickHandler(GridRowClickEventArgs args) => OnOpenDialogHandler(EnumType.Update, args.Item as DepartmentModel);
 
     protected async void DeleteDataHandler()
     {
         try
         {
-            if(SelectedUsers == null || !SelectedUsers.Any())
+            if(SelectedDepartments == null || !SelectedDepartments.Any())
             {
                 ShowWarning(DefaultConstants.MESSAGE_NO_CHOSE_DATA);
                 return;
@@ -196,40 +173,21 @@ public class UserController : SMControllerBase
             var confirm = await _rDialogs!.ConfirmAsync($" {DefaultConstants.MESSAGE_CONFIRM_DELETE} ");
             if (!confirm) return;
             await ShowLoader();
-            bool isSuccess = await _masterDataService!.DeleteDataAsync(nameof(EnumTable.Users), "", string.Join(",", SelectedUsers.Select(m=>m.Id)), pUserId);
+            bool isSuccess = await _masterDataService!.DeleteDataAsync(nameof(EnumTable.Departments), "", string.Join(",", SelectedDepartments.Select(m=>m.DepartmentId)), pUserId);
             if(isSuccess)
             {
-                await getDataUsers();
+                await getDataDepartments();
             }
         }
         catch (Exception ex)
         {
-            _logger!.LogError(ex, "UserController", "DeleteDataHandler");
+            _logger!.LogError(ex, "DepartmentController", "DeleteDataHandler");
             ShowError(ex.Message);
         }
         finally
         {
             await ShowLoader(false);
             await InvokeAsync(StateHasChanged);
-        }
-    }
-
-    /// <summary>
-    /// chọn bộ phận
-    /// </summary>
-    /// <param name="supplies"></param>
-    /// <param name="invetory"></param>
-    public async Task SelectedDepartmentChanged(int departmentId)
-    {
-        try
-        {
-            if (departmentId == null) return;
-            UserUpdate.DepartmentId = departmentId;
-            await InvokeAsync(StateHasChanged);
-        }
-        catch (Exception ex)
-        {
-            throw;
         }
     }
     #endregion

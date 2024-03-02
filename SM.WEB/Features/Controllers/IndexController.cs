@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components;
 using SM.Models.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
 using SM.WEB.Features.Pages;
+using Telerik.Blazor.Components;
 
 namespace SM.WEB.Features.Controllers
 {
@@ -18,6 +19,7 @@ namespace SM.WEB.Features.Controllers
         [Inject] private IDateTimeService? _datetimeService { get; init; }
         [Inject] private NavigationManager? _navigationManager { get; init; }
 
+
         #endregion Dependency Injection
 
         #region Properties
@@ -27,9 +29,46 @@ namespace SM.WEB.Features.Controllers
         public List<CustomerModel>? ListCustomers { get; set; }
         public UserModel CurUser { get; set; } = new UserModel();
         public bool IsShowDialogEmp { get; set; }
+        public DateTime FromDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+        public DateTime ToDate = DateTime.Now;
+
         #endregion
 
         #region Override Functions
+        protected async void ReLoadDataHandler()
+        {
+            try
+            {
+                IsInitialDataLoadComplete = false;
+                await getDataCustomers();
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "UserController", "ReLoadDataHandler");
+                ShowError(ex.Message);
+            }
+            finally
+            {
+                IsInitialDataLoadComplete = true;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        protected void OnRowDoubleClickHandler(GridRowClickEventArgs args) => OnOpenDialogHandler(args.Item as UserModel);
+        protected void OnOpenDialogHandler(UserModel? pItemDetails = null)
+        {
+            try
+            {
+                ItemFilter.SearchUserId = pItemDetails.Id;
+                IsShowDialogEmp = false;
+                getDataCustomers();
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "BranchController", "OnOpenDialogHandler");
+                ShowError(ex.Message);
+            }
+        }
+
 
         protected override async Task OnInitializedAsync()
         {
@@ -90,7 +129,12 @@ namespace SM.WEB.Features.Controllers
         #endregion Override Functions
 
         #region Private Functions
-
+        private async Task getDataCustomers()
+        {
+            ItemFilter.FromDate = FromDate;
+            ItemFilter.ToDate = ToDate;
+            ListCustomers = await _masterDataService!.GetCustomersAsync(ItemFilter);
+        }
         #endregion
     }
 }

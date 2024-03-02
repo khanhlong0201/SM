@@ -29,6 +29,8 @@ namespace SM.WEB.Features.Controllers
         public EditContext? _EditContext { get; set; }
         public bool IsShowDialog { get; set; }
         public bool IsCreate { get; set; } = true;
+        public List<ProductModel>? ListProducts { get; set; } = new List<ProductModel>();
+        public ProductModel ProductUpdate { get; set; } = new ProductModel();
         #endregion
 
         #region Override Functions
@@ -76,6 +78,25 @@ namespace SM.WEB.Features.Controllers
         #endregion
 
         #region Private Functions
+        /// <summary>
+        /// chọn sản phẩm
+        /// </summary>
+        /// <param name="supplies"></param>
+        /// <param name="invetory"></param>
+        public async Task SelectedProductChanged(int productId)
+        {
+            try
+            {
+                if (productId == null) return;
+                CustomerUpdate.ProductId = productId;
+                CustomerUpdate.Description = ListProducts.Where(d => d.ProductId == productId).FirstOrDefault().Description;
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
         private async Task getDataCustomers()
         {
             ListCustomers = new List<CustomerModel>();
@@ -135,10 +156,16 @@ namespace SM.WEB.Features.Controllers
             }
         }
 
-        protected void OnOpenDialogHandler(EnumType pAction = EnumType.Add, CustomerModel? pItemDetails = null)
+        protected async Task OnOpenDialogHandler(EnumType pAction = EnumType.Add, CustomerModel? pItemDetails = null)
         {
             try
             {
+                ListProducts = await _masterDataService.GetDataProductsAsync();
+                if(ListProducts == null || ListProducts.Count == 0)
+                {
+                    ListProducts = new List<ProductModel>();
+
+                }
                 if (pAction == EnumType.Add)
                 {
                     IsCreate = true;

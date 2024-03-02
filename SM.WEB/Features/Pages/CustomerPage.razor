@@ -79,11 +79,11 @@
                 </FooterTemplate>
             </GridColumn>
             <GridColumn Field=@nameof(CustomerModel.FullName) Width="210px" Title="Tên khách hàng" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
-            <GridColumn Field=@nameof(CustomerModel.PhoneNumber) Width="130px" Title="Số điện thoại" Filterable="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.Email) Width="200px" Title="Số điện thoại/Email" Filterable="false" DefaultFilterOperator="@FilterOperator.Contains"/>
             <GridColumn Field=@nameof(CustomerModel.Address) Width="170px" Title="Địa chỉ" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
-            <GridColumn Field=@nameof(CustomerModel.Email) Width="140px" Title="Email" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
-            <GridColumn Field=@nameof(CustomerModel.DateOfBirth) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE" Width="140px" Title="Ngày sinh" Filterable="false" />
-            <GridColumn Field=@nameof(CustomerModel.NoteForAll) Width="240px" Title="Ghi chú" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.ProductName) Width="240px" Title="Tên sản phẩm" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.Description) Width="240px" Title="Mô tả sản phẩm" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
+            <GridColumn Field=@nameof(CustomerModel.CustomerSource) Width="240px" Title="Nguồn khách" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
             <GridColumn Field=@nameof(CustomerModel.UserNameCreate) Width="140px" Title="Người tạo" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains"/>
             <GridColumn Field=@nameof(CustomerModel.DateCreate) DisplayFormat="@DefaultConstants.FORMAT_GRID_DATE" Width="140px" Title="Ngày tạo" Filterable="false" />
             @*<GridColumn Field=@nameof(CustomerModel.UserNameUpdate) Width="140px" Title="Người cập nhật" ShowFilterCellButtons="false" DefaultFilterOperator="@FilterOperator.Contains" />
@@ -104,37 +104,54 @@
         </div>
         <div class="mt-2">
             <div class="row row-gap-2">
-                <div class="col-md-6 col-sm-12">
+                <div class="col-md-12 col-sm-12">
                     <HLabel For="txtFullName" Value="Tên khách hàng:" IsRequired="true" />
                     <TelerikTextBox @bind-Value="@CustomerUpdate.FullName" Id="txtFullName" />
                     <HValidationTooltip ValidationFor="@(()=> CustomerUpdate.FullName)" Id="txtFullName" />
                 </div>
-                <div class="col-md-6 col-sm-12">
+                @*<div class="col-md-6 col-sm-12">
                     <HLabel For="txtUserName" Value="Ngày sinh:" />
                     <TelerikDatePicker @bind-Value="@CustomerUpdate.DateOfBirth"
                                        Placeholder=""
                                        Format="dd/MM/yyyy"
                                        Class="btn-noborder-radius-left">
                     </TelerikDatePicker>
-                </div>
+                </div>*@
             </div>
         </div>
         <div class="mt-2">
-            <HLabel For="txtPhoneNumber" Value="Số điện thoại:" IsRequired="true" />
-            <TelerikTextBox @bind-Value="@CustomerUpdate.PhoneNumber" Id="txtPhoneNumber" />
-            <HValidationTooltip ValidationFor="@(()=> CustomerUpdate.PhoneNumber)" Id="txtPhoneNumber" />
+            <HLabel For="txtEmail" Value="Số điện thoại/Email:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@CustomerUpdate.Email" Id="txtEmail" />
+            <HValidationTooltip ValidationFor="@(()=> CustomerUpdate.Email)" Id="txtEmail" />
         </div>
         <div class="mt-2">
             <HLabel For="txtAddress" Value="Địa chỉ:" />
             <TelerikTextBox @bind-Value="@CustomerUpdate.Address" Id="txtAddress" />
         </div>
         <div class="mt-2">
-            <HLabel For="txtEmail" Value="Email:" />
-            <TelerikTextBox @bind-Value="@CustomerUpdate.Email" Id="txtEmail" />
+            <HLabel For="txtNoteForAll" Value="Nguồn khách:" />
+            <TelerikTextBox @bind-Value="@CustomerUpdate.CustomerSource" Id="txtCustomerSource" />
+        </div>
+         <div class="mt-2">
+            <HLabel For="txtNoteForAll" Value="Sản phẩm:" />
+             <TelerikComboBox Data="@ListProducts"
+                  ValueChanged="@((int productId) => SelectedProductChanged(productId))"
+                Value="@CustomerUpdate.ProductId"
+                ValueExpression="@(() => ProductUpdate.ProductId)"
+                Placeholder="Chọn sản phẩm"
+                TextField="@nameof(ProductModel.ProductName)"
+                ValueField="@nameof(ProductModel.ProductId)"
+                Filterable="true" 
+                ClearButton="false"
+                Id="cbProduct"
+                Class="btn-noborder-radius-left"
+                Width="100%">
+            </TelerikComboBox>
+            <HValidationTooltip ValidationFor="@(()=> ProductUpdate.ProductId)" Id="cbProduct" />
         </div>
         <div class="mt-2">
-            <HLabel For="txtNoteForAll" Value="Ghi chú:" />
-            <TelerikTextBox @bind-Value="@CustomerUpdate.NoteForAll" Id="txtNoteForAll" />
+            <HLabel For="txtDescription" Value="Mô tả sản phẩm:" />
+            <TelerikTextArea Enabled="false"  @bind-Value="@CustomerUpdate.Description" Id="txtDescription" AutoSize="true" Size="1000" />
         </div>
 
     </EditForm>

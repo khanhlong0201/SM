@@ -207,5 +207,97 @@ namespace SM.API.Controllers
 
             }
         }
+
+        [HttpGet]
+        [Route("GetProducts")]
+        public async Task<IActionResult> GetDataProducts(int pUserId = -1)
+        {
+            try
+            {
+                var data = await _masterService.GetProductsAsync(pUserId);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetProducts");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+        }
+
+        [HttpPost]
+        [Route("UpdateProduct")]
+        public async Task<IActionResult> UpdateProduct([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _masterService.UpdateProducts(request);
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "UpdateProduct");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+        }
+
+        [HttpGet]
+        [Route("GetDepartments")]
+        public async Task<IActionResult> GetDataDepartments(int pUserId = -1)
+        {
+            try
+            {
+                var data = await _masterService.GetDepartmentsAsync(pUserId);
+                return Ok(data);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetDepartments");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+        }
+
+        [HttpPost]
+        [Route("UpdateDepartment")]
+        public async Task<IActionResult> UpdateDepartment([FromBody] RequestModel request)
+        {
+            try
+            {
+                var response = await _masterService.UpdateDepartments(request);
+                if (response == null || response.StatusCode != 0) return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = response?.Message ?? "Vui lòng liên hệ IT để được hổ trợ."
+                });
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "UpdateDepartment");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+            }
+        }
+
+
     }
 }

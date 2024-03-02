@@ -22,6 +22,12 @@ public interface IMasterDataService
     Task<ResponseModel> UpdateCustomerAsync(RequestModel pRequest);
 
     Task<IEnumerable<CustomerModel>> GetCustomersAsync(SearchModel pSearch);
+    Task<IEnumerable<DepartmentModel>> GetDepartmentsAsync(int pUserId = -1);
+
+    Task<ResponseModel> UpdateDepartments(RequestModel pRequest);
+    Task<IEnumerable<ProductModel>> GetProductsAsync(int pUserId = -1);
+
+    Task<ResponseModel> UpdateProducts(RequestModel pRequest);
 }
 
 public class MasterDataService : IMasterDataService
@@ -89,11 +95,11 @@ public class MasterDataService : IMasterDataService
                         response.Message = "Không đánh được mã nhân viên!. Vui lòng kiểm tra lại";
                         break;
                     }
-                    queryString = @"INSERT INTO [dbo].[Users]([EmpNo],[UserName],[Password],[LastPassword],[FullName],[PhoneNumber] ,[Email] ,[Address],[DateOfBirth],[IsAdmin],[DateCreate] ,[UserCreate],[Isdelete])
-                                                        values (@EmpNo, @UserName , @Password , @LastPassword, @FullName, @PhoneNumber , @Email, @Address, @DateOfBirth, @IsAdmin, @DateTimeNow, @UserId, 0)";
+                    queryString = @"INSERT INTO [dbo].[Users]([EmpNo],[UserName],[Password],[LastPassword],[FullName],[PhoneNumber] ,[Email] ,[Address],[DateOfBirth],[IsAdmin],[DateCreate] ,[UserCreate],[Isdelete], DepartmentId)
+                                                        values (@EmpNo, @UserName , @Password , @LastPassword, @FullName, @PhoneNumber , @Email, @Address, @DateOfBirth, @IsAdmin, @DateTimeNow, @UserId, 0, @DepartmentId)";
 
                     string sPassword = EncryptHelper.Encrypt(oUser.Password + "");
-                    sqlParameters = new SqlParameter[12];
+                    sqlParameters = new SqlParameter[13];
                     sqlParameters[0] = new SqlParameter("@UserName", oUser.UserName);
                     sqlParameters[1] = new SqlParameter("@Password", sPassword);
                     sqlParameters[2] = new SqlParameter("@LastPassword", sPassword);
@@ -106,6 +112,7 @@ public class MasterDataService : IMasterDataService
                     sqlParameters[9] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
                     sqlParameters[10] = new SqlParameter("@UserId", pRequest.UserId);
                     sqlParameters[11] = new SqlParameter("@EmpNo", oUser.EmpNo);
+                    sqlParameters[12] = new SqlParameter("@DepartmentId", oUser.DepartmentId);
                     await ExecQuery();
                     break;
 
@@ -120,9 +127,10 @@ public class MasterDataService : IMasterDataService
                                       ,[IsAdmin] = @IsAdmin
                                       ,[DateUpdate] = @DateTimeNow
                                       ,[UserUpdate] = @UserId
+                                      ,[DepartmentId] = @DepartmentId
                                  WHERE [Id] = @Id";
 
-                    sqlParameters = new SqlParameter[10];
+                    sqlParameters = new SqlParameter[11];
                     sqlParameters[0] = new SqlParameter("@Id", oUser.Id);
                     sqlParameters[1] = new SqlParameter("@FullName", oUser.FullName ?? (object)DBNull.Value);
                     sqlParameters[2] = new SqlParameter("@PhoneNumber", oUser.PhoneNumber ?? (object)DBNull.Value);
@@ -133,6 +141,7 @@ public class MasterDataService : IMasterDataService
                     sqlParameters[7] = new SqlParameter("@UserId", pRequest.UserId);
                     sqlParameters[8] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
                     sqlParameters[9] = new SqlParameter("@UserName", oUser.UserName ?? (object)DBNull.Value);
+                    sqlParameters[10] = new SqlParameter("@DepartmentId", oUser.DepartmentId);
                     await ExecQuery();
                     break;
 
@@ -178,22 +187,26 @@ public class MasterDataService : IMasterDataService
             await _context.Connect();
             SqlParameter[] sqlParameters = new SqlParameter[1];
             sqlParameters[0] = new SqlParameter("@UserId", pUserid);
-            data = await _context.GetDataAsync(@$"SELECT [Id]
-                                                  ,[EmpNo]
-                                                  ,[UserName]
-                                                  ,[Password]
-                                                  ,[LastPassword]
-                                                  ,[FullName]
-                                                  ,[PhoneNumber]
-                                                  ,[Email]
-                                                  ,[Address]
-                                                  ,[DateOfBirth]
-                                                  ,[IsAdmin]
-                                                  ,[DateCreate]
-                                                  ,[UserCreate]
-                                                  ,[DateUpdate]
-                                                  ,[UserUpdate]
-                                              FROM [dbo].[Users] t0 where ISNULL(t0.IsDelete,0) = 0" // không lấy lên tk Support
+            data = await _context.GetDataAsync(@$"SELECT t0.[Id]
+                                                ,t0.[EmpNo]
+                                                ,t0.[UserName]
+                                                ,t0.[Password]
+                                                ,t0.[LastPassword]
+                                                ,t0.[FullName]
+                                                ,t0.[PhoneNumber]
+                                                ,t0.[Email]
+                                                ,t0.[Address]
+                                                ,t0.[DateOfBirth]
+                                                ,t0.[IsAdmin]
+                                                ,t0.[DateCreate]
+                                                ,t0.[UserCreate]
+                                                ,t0.[DateUpdate]
+                                                ,t0.[UserUpdate]
+	                                            ,t1.DepartmentId
+	                                            ,t1.DepartmentName
+                                            FROM [dbo].[Users] t0 with(nolock) 
+                                            left join [dbo].[Departments] t1 with(nolock) on t0.DepartmentId = t1.DepartmentId
+                                            where ISNULL(t0.IsDelete,0) = 0" // không lấy lên tk Support
                     , DataRecordToUserModel, sqlParameters, commandType: CommandType.Text);
         }
         catch (Exception) { throw; }
@@ -253,9 +266,14 @@ public class MasterDataService : IMasterDataService
             data = await _context.GetDataAsync(@$"select [CusNo], T0.[FullName], T0.[PhoneNumber], T0.[Email], T0.[Address], T0.[DateOfBirth]
                       ,T0.[NoteForAll],T0.[DateCreate],T0.[UserCreate],T0.[DateUpdate],T0.[UserUpdate]
 					  ,T1.FullName as [UserNameCreate], T2.FullName as [UserNameUpdate]
+					  ,T3.ProductId 
+					  ,T3.ProductName
+                      ,t3.Description
+					  ,T0.CustomerSource
 			     from [dbo].[Customers] as T0 with(nolock)
 		    left join [dbo].[Users] as T1 with(nolock) on T0.UserCreate = T1.Id
 			left join [dbo].[Users] as T2 with(nolock) on T0.UserUpdate = T2.Id
+			left join [dbo].[Products] as T3 with(nolock) on T0.ProductId = T3.ProductId
 					where T0.[IsDelete] = 0 order by [CusNo] desc"
                     , DataRecordToCustomerModel, commandType: CommandType.Text);
         }
@@ -284,7 +302,7 @@ public class MasterDataService : IMasterDataService
             switch (pRequest.Type)
             {
                 case nameof(EnumType.Add):
-                    oCustomer.CusNo = await getVoucherNo(nameof(EnumTable.@Customers));
+                    oCustomer.CusNo = await getVoucherNo(nameof(EnumTable.@Customers), oCustomer.FullName);
                     if (string.IsNullOrWhiteSpace(oCustomer.CusNo))
                     {
                         response.StatusCode = (int)HttpStatusCode.NoContent;
@@ -293,9 +311,9 @@ public class MasterDataService : IMasterDataService
                     }
                     sqlParameters = getCustomerParams(oCustomer, pRequest.UserId);
                     queryString = @"Insert into [dbo].[Customers] ([CusNo],[FullName],[PhoneNumber],[Email]
-                                    ,[Address],[DateOfBirth],[NoteForAll],[DateCreate],[UserCreate],[IsDelete])
+                                    ,[Address],[DateOfBirth],[NoteForAll],[DateCreate],[UserCreate],[IsDelete],ProductId, CustomerSource )
                                     values (@CusNo, @FullName, @PhoneNumber, @Email
-                                    ,@Address, @DateOfBirth, @NoteForAll, @DateTimeNow, @UserId, 0)";
+                                    ,@Address, @DateOfBirth, @NoteForAll, @DateTimeNow, @UserId, 0, @ProductId, @CustomerSource)";
                     break;
 
                 case nameof(EnumType.Update):
@@ -314,6 +332,8 @@ public class MasterDataService : IMasterDataService
                                        set [FullName] = @FullName , [PhoneNumber] = @PhoneNumber, [Email] = @Email
                                          , [NoteForAll] = @NoteForAll, [Address] = @Address , [DateOfBirth] = @DateOfBirth
                                          , [DateUpdate] = @DateTimeNow, [UserUpdate] = @UserId
+                                         , [ProductId] = @ProductId
+                                         , CustomerSource = @CustomerSource
                                      where [CusNo] = @CusNo";
                     sqlParameters = getCustomerParams(oCustomer, pRequest.UserId);
                     break;
@@ -396,6 +416,44 @@ public class MasterDataService : IMasterDataService
                     //}
                     response = await deleteDataAsync(nameof(EnumTable.@Customers), queryString, sqlParameters);
                     break;
+                case nameof(EnumTable.Departments):
+                    // kiểm tra điều kiện trước khi xóa
+                    //
+                    queryString = "[Id] in ( select value from STRING_SPLIT(@ListIds, ',') ) and [IsDelete] = 0";
+                    sqlParameters = new SqlParameter[4];
+                    sqlParameters[0] = new SqlParameter("@ReasonDelete", pRequest.JsonDetail ?? (object)DBNull.Value);
+                    sqlParameters[1] = new SqlParameter("@ListIds", pRequest.Json); // "1,2,3,4"
+                    sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+
+                    //responseCheck = await CheckKeyBindingBeforeDeleting(pRequest);
+                    //if (responseCheck != null && responseCheck.StatusCode == -1)
+                    //{
+                    //    response.StatusCode = -1;
+                    //    response.Message = responseCheck.Message;
+                    //    return response;
+                    //}
+                    response = await deleteDataAsync(nameof(EnumTable.Departments), queryString, sqlParameters);
+                    break;
+                case nameof(EnumTable.Products):
+                    // kiểm tra điều kiện trước khi xóa
+                    //
+                    queryString = "[Id] in ( select value from STRING_SPLIT(@ListIds, ',') ) and [IsDelete] = 0";
+                    sqlParameters = new SqlParameter[4];
+                    sqlParameters[0] = new SqlParameter("@ReasonDelete", pRequest.JsonDetail ?? (object)DBNull.Value);
+                    sqlParameters[1] = new SqlParameter("@ListIds", pRequest.Json); // "1,2,3,4"
+                    sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+
+                    //responseCheck = await CheckKeyBindingBeforeDeleting(pRequest);
+                    //if (responseCheck != null && responseCheck.StatusCode == -1)
+                    //{
+                    //    response.StatusCode = -1;
+                    //    response.Message = responseCheck.Message;
+                    //    return response;
+                    //}
+                    response = await deleteDataAsync(nameof(EnumTable.Products), queryString, sqlParameters);
+                    break;
 
                 default:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
@@ -416,9 +474,256 @@ public class MasterDataService : IMasterDataService
         return response;
     }
 
+    /// <summary>
+    /// Thêm mới/Cập nhật thông tin sản phẩm
+    /// </summary>
+    /// <param name="pRequest"></param>
+    /// <returns></returns>
+    public async Task<ResponseModel> UpdateProducts(RequestModel pRequest)
+    {
+        ResponseModel response = new ResponseModel();
+        try
+        {
+            await _context.Connect();
+            string queryString = "";
+            ProductModel oProduct = JsonConvert.DeserializeObject<ProductModel>(pRequest.Json + "")!;
+            SqlParameter[] sqlParameters;
+            async Task ExecQuery()
+            {
+                var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+                if (data != null && data.Rows.Count > 0)
+                {
+                    response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                    response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+                }
+            }
+            switch (pRequest.Type)
+            {
+                case nameof(EnumType.Add):
+                    sqlParameters = new SqlParameter[1];
+                    sqlParameters[0] = new SqlParameter("@ProductName", oProduct.ProductName);
+                    // kiểm tra tên đăng nhập
+                    if (await _context.ExecuteScalarAsync("select COUNT(*) from Products with(nolock) where ProductName = @ProductName", sqlParameters) > 0)
+                    {
+                        response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        response.Message = "Tên sản phẩm đã tồn tại!";
+                        break;
+                    }
+                    queryString = @"INSERT INTO [dbo].[Products]([ProductName],[Description] ,[DateCreate]  ,[UserCreate],[IsDelete])
+                                                        values (@ProductName, @Description , @DateTimeNow, @UserId, 0)";
+                    sqlParameters = new SqlParameter[4];
+                    sqlParameters[0] = new SqlParameter("@ProductName", oProduct.ProductName);
+                    sqlParameters[1] = new SqlParameter("@Description", oProduct.Description);
+                    sqlParameters[2] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+                    sqlParameters[3] = new SqlParameter("@UserId", pRequest.UserId);
+                    await ExecQuery();
+                    break;
+
+                case nameof(EnumType.Update):
+                    queryString = @"UPDATE [dbo].[Products]
+                                   SET [ProductName] = @ProductName
+                                      ,[Description] = @Description
+                                      ,[DateUpdate] = @DateTimeNow
+                                      ,[UserUpdate] = @UserId
+                                 WHERE [ProductId] = @ProductId";
+                    sqlParameters = new SqlParameter[5];
+                    sqlParameters[0] = new SqlParameter("@ProductId", oProduct.ProductId);
+                    sqlParameters[1] = new SqlParameter("@ProductName", oProduct.ProductName ?? (object)DBNull.Value);
+                    sqlParameters[2] = new SqlParameter("@Description", oProduct.Description ?? (object)DBNull.Value);
+                    sqlParameters[3] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[4] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+                    await ExecQuery();
+                    break;
+                default:
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    response.Message = "Không xác định được phương thức!";
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
+            response.Message = ex.Message;
+        }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return response;
+    }
+
+    /// <summary>
+    /// lấy danh sách sản phẩm
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<ProductModel>> GetProductsAsync(int pUserid = -1)
+    {
+        IEnumerable<ProductModel> data;
+        try
+        {
+            await _context.Connect();
+            SqlParameter[] sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter("@UserId", pUserid);
+            data = await _context.GetDataAsync(@$"SELECT [ProductId]
+                                                  ,[ProductName]
+                                                  ,[Description]
+                                                  ,[DateCreate]
+                                                  ,[UserCreate]
+                                                  ,[DateUpdate]
+                                                  ,[UserUpdate]
+                                              FROM [dbo].[Products] t0 where ISNULL(t0.IsDelete,0) = 0" // không lấy lên tk Support
+                    , DataRecordToProductModel, sqlParameters, commandType: CommandType.Text);
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
+
+    /// <summary>
+    /// Thêm mới/Cập nhật thông tin bộ phận
+    /// </summary>
+    /// <param name="pRequest"></param>
+    /// <returns></returns>
+    public async Task<ResponseModel> UpdateDepartments(RequestModel pRequest)
+    {
+        ResponseModel response = new ResponseModel();
+        try
+        {
+            await _context.Connect();
+            string queryString = "";
+            DepartmentModel oDepartment = JsonConvert.DeserializeObject<DepartmentModel>(pRequest.Json + "")!;
+            SqlParameter[] sqlParameters;
+            async Task ExecQuery()
+            {
+                var data = await _context.AddOrUpdateAsync(queryString, sqlParameters, CommandType.Text);
+                if (data != null && data.Rows.Count > 0)
+                {
+                    response.StatusCode = int.Parse(data.Rows[0]["StatusCode"]?.ToString() ?? "-1");
+                    response.Message = data.Rows[0]["ErrorMessage"]?.ToString();
+                }
+            }
+            switch (pRequest.Type)
+            {
+                case nameof(EnumType.Add):
+                    sqlParameters = new SqlParameter[1];
+                    sqlParameters[0] = new SqlParameter("@DepartmentName", oDepartment.DepartmentName);
+                    // kiểm tra tên đăng nhập
+                    if (await _context.ExecuteScalarAsync("select COUNT(*) from Departments with(nolock) where DepartmentName = @DepartmentName", sqlParameters) > 0)
+                    {
+                        response.StatusCode = (int)HttpStatusCode.BadRequest;
+                        response.Message = "Tên bộ phận đã tồn tại!";
+                        break;
+                    }
+                    queryString = @"INSERT INTO [dbo].[Departments]([DepartmentName],[DateCreate]  ,[UserCreate],[IsDelete])
+                                                        values (@DepartmentName, @DateTimeNow, @UserId, 0)";
+                    sqlParameters = new SqlParameter[3];
+                    sqlParameters[0] = new SqlParameter("@DepartmentName", oDepartment.DepartmentName);
+                    sqlParameters[1] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+                    sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                    await ExecQuery();
+                    break;
+
+                case nameof(EnumType.Update):
+                    queryString = @"UPDATE [dbo].[Departments]
+                                   SET [DepartmentName] = @DepartmentName
+                                      ,[DateUpdate] = @DateTimeNow
+                                      ,[UserUpdate] = @UserId
+                                 WHERE [DepartmentId] = @DepartmentId";
+                    sqlParameters = new SqlParameter[5];
+                    sqlParameters[0] = new SqlParameter("@ProductId", oDepartment.DepartmentId);
+                    sqlParameters[1] = new SqlParameter("@ProductName", oDepartment.DepartmentName ?? (object)DBNull.Value);
+                    sqlParameters[2] = new SqlParameter("@UserId", pRequest.UserId);
+                    sqlParameters[3] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+                    await ExecQuery();
+                    break;
+                default:
+                    response.StatusCode = (int)HttpStatusCode.BadRequest;
+                    response.Message = "Không xác định được phương thức!";
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            response.StatusCode = (int)HttpStatusCode.BadRequest;
+            response.Message = ex.Message;
+        }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return response;
+    }
+
+    /// <summary>
+    /// lấy danh sách bộ phận
+    /// </summary>
+    /// <returns></returns>
+    public async Task<IEnumerable<DepartmentModel>> GetDepartmentsAsync(int pUserid = -1)
+    {
+        IEnumerable<DepartmentModel> data;
+        try
+        {
+            await _context.Connect();
+            SqlParameter[] sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter("@UserId", pUserid);
+            data = await _context.GetDataAsync(@$"SELECT [DepartmentId]
+                                                  ,[DepartmentName]
+                                                  ,[DateCreate]
+                                                  ,[UserCreate]
+                                                  ,[DateUpdate]
+                                                  ,[UserUpdate]
+                                              FROM [dbo].[Departments] t0 where ISNULL(t0.IsDelete,0) = 0" // không lấy lên tk Support
+                    , DataRecordToDepartmentModel, sqlParameters, commandType: CommandType.Text);
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
+
+
     #endregion Public Funtions
 
     #region Private Funtions
+
+    /// <summary>
+    /// đọc danh sách phòng ban
+    /// </summary>
+    /// <param name="record"></param>
+    /// <returns></returns>
+    private DepartmentModel DataRecordToDepartmentModel(IDataRecord record)
+    {
+        DepartmentModel dep = new();
+        if (!Convert.IsDBNull(record["DepartmentId"])) dep.DepartmentId = Convert.ToInt32(record["DepartmentId"]);
+        if (!Convert.IsDBNull(record["DepartmentName"])) dep.DepartmentName = Convert.ToString(record["DepartmentName"]);
+        if (!Convert.IsDBNull(record["DateCreate"])) dep.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+        if (!Convert.IsDBNull(record["UserCreate"])) dep.UserCreate = Convert.ToInt32(record["UserCreate"]);
+        if (!Convert.IsDBNull(record["DateUpdate"])) dep.DateUpdate = Convert.ToDateTime(record["DateUpdate"]);
+        if (!Convert.IsDBNull(record["UserUpdate"])) dep.UserUpdate = Convert.ToInt32(record["UserUpdate"]);
+        return dep;
+    }
+    /// <summary>
+    /// đọc danh sách sản phẩm
+    /// </summary>
+    /// <param name="record"></param>
+    /// <returns></returns>
+    private ProductModel DataRecordToProductModel(IDataRecord record)
+    {
+        ProductModel product = new();
+        if (!Convert.IsDBNull(record["ProductId"])) product.ProductId = Convert.ToInt32(record["ProductId"]);
+        if (!Convert.IsDBNull(record["ProductName"])) product.ProductName = Convert.ToString(record["ProductName"]);
+        if (!Convert.IsDBNull(record["Description"])) product.Description = Convert.ToString(record["Description"]);
+        if (!Convert.IsDBNull(record["DateCreate"])) product.DateCreate = Convert.ToDateTime(record["DateCreate"]);
+        if (!Convert.IsDBNull(record["UserCreate"])) product.UserCreate = Convert.ToInt32(record["UserCreate"]);
+        if (!Convert.IsDBNull(record["DateUpdate"])) product.DateUpdate = Convert.ToDateTime(record["DateUpdate"]);
+        if (!Convert.IsDBNull(record["UserUpdate"])) product.UserUpdate = Convert.ToInt32(record["UserUpdate"]);
+        return product;
+    }
 
     /// <summary>
     /// đọc danh sách Users
@@ -443,6 +748,8 @@ public class MasterDataService : IMasterDataService
         if (!Convert.IsDBNull(record["UserCreate"])) user.UserCreate = Convert.ToInt32(record["UserCreate"]);
         if (!Convert.IsDBNull(record["DateUpdate"])) user.DateUpdate = Convert.ToDateTime(record["DateUpdate"]);
         if (!Convert.IsDBNull(record["UserUpdate"])) user.UserUpdate = Convert.ToInt32(record["UserUpdate"]);
+        if (!Convert.IsDBNull(record["DepartmentId"])) user.DepartmentId = Convert.ToInt32(record["DepartmentId"]);
+        if (!Convert.IsDBNull(record["DepartmentName"])) user.DepartmentName = Convert.ToString(record["DepartmentName"]);
         return user;
     }
 
@@ -517,6 +824,10 @@ public class MasterDataService : IMasterDataService
         if (!Convert.IsDBNull(record["UserUpdate"])) model.UserUpdate = Convert.ToInt32(record["UserUpdate"]);
         if (!Convert.IsDBNull(record["UserNameCreate"])) model.UserNameCreate = Convert.ToString(record["UserNameCreate"]);
         if (!Convert.IsDBNull(record["UserNameUpdate"])) model.UserNameUpdate = Convert.ToString(record["UserNameUpdate"]);
+        if (!Convert.IsDBNull(record["ProductId"])) model.ProductId = Convert.ToInt32(record["ProductId"]);
+        if (!Convert.IsDBNull(record["ProductName"])) model.ProductName = Convert.ToString(record["ProductName"]);
+        if (!Convert.IsDBNull(record["CustomerSource"])) model.CustomerSource = Convert.ToString(record["CustomerSource"]);
+        if (!Convert.IsDBNull(record["Description"])) model.Description = Convert.ToString(record["Description"]); 
         return model;
     }
 
@@ -552,7 +863,7 @@ public class MasterDataService : IMasterDataService
     /// <returns></returns>
     private SqlParameter[] getCustomerParams(CustomerModel oCustomer, int pUserId)
     {
-        SqlParameter[] sqlParameters = new SqlParameter[9];
+        SqlParameter[] sqlParameters = new SqlParameter[11];
         sqlParameters[0] = new SqlParameter("@CusNo", oCustomer.CusNo);
         sqlParameters[1] = new SqlParameter("@FullName", oCustomer.FullName);
         sqlParameters[2] = new SqlParameter("@PhoneNumber", oCustomer.PhoneNumber ?? (object)DBNull.Value);
@@ -562,6 +873,8 @@ public class MasterDataService : IMasterDataService
         sqlParameters[6] = new SqlParameter("@NoteForAll", oCustomer.NoteForAll ?? (object)DBNull.Value);
         sqlParameters[7] = new SqlParameter("@UserId", pUserId);
         sqlParameters[8] = new SqlParameter("@DateTimeNow", _dateTimeService.GetCurrentVietnamTime());
+        sqlParameters[9] = new SqlParameter("@CustomerSource", oCustomer.CustomerSource ?? (object)DBNull.Value);
+        sqlParameters[10] = new SqlParameter("@ProductId", oCustomer.ProductId);
         return sqlParameters;
     }
 
@@ -570,7 +883,7 @@ public class MasterDataService : IMasterDataService
     /// </summary>
     /// <param name="pTable"></param>
     /// <returns></returns>
-    private async Task<string> getVoucherNo(string pTable = nameof(EnumTable.@Customers))
+    private async Task<string> getVoucherNo(string pTable = nameof(EnumTable.@Customers), string fullName ="")
     {
         string strNo = "";
         try
@@ -583,19 +896,22 @@ public class MasterDataService : IMasterDataService
             {
                 case nameof(EnumTable.@Customers):
                     string strMonth = $"0{getdate.Day}".Substring($"0{getdate.Day}".Length - 2);
-                    strPretrix = $"KH-{(getdate.Year + "").Substring(2)}{strMonth}-";
+                    string[] parts = fullName.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                    string lastName = parts[parts.Length - 1];
+
+                    strPretrix = $"VT-{lastName.ToUpper()}-";
                     queryString = @$"select top 1 CusNo  from [dbo].[Customers] with(nolock)
                                   where CusNo like '%{strPretrix}%' order by CusNo desc";
                     // lấy mã
                     strNo = Convert.ToString(await _context.ExecuteScalarObjectAsync(queryString)) + "";
                     if (string.IsNullOrWhiteSpace(strNo))
                     {
-                        strNo = $"{strPretrix}00001";
+                        strNo = $"{strPretrix}01";
                     }
                     else
                     {
-                        int iMax = int.Parse(strNo.Substring(strNo.Length - 5)) + 1; // tăng 1 đơn vị
-                        strNo = $"00000{iMax}".Substring($"00000{iMax}".Length - 5);
+                        int iMax = int.Parse(strNo.Substring(strNo.Length - 2)) + 1; // tăng 1 đơn vị
+                        strNo = $"0{iMax}".Substring($"0{iMax}".Length - 2);
                         strNo = $"{strPretrix}{strNo}";
                     }
                     break;

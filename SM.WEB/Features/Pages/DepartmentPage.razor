@@ -1,0 +1,76 @@
+﻿@page "/department"
+@inherits DepartmentController;
+@*@attribute [Authorize(Roles = "administrator, manager")]*@
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png" OnClick="@DeleteDataHandler">Xóa dòng</ToolBarButton>
+     <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@(async () => await GridRef.SaveAsExcelFileAsync())">Xuất excel</ToolBarButton>
+</TelerikToolBar>
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListDepartments"
+                 @ref="@GridRef"   
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedDepartments">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(DepartmentModel.DepartmentName) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+           <GridColumn Field=@nameof(DepartmentModel.DepartmentId) Width="130px" MaxResizableWidth="150" Title="Mã bộ phận">
+                <Template>
+                    @{
+                        var model = (context as DepartmentModel);
+                        <span class="h-link" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))" title="Xem chi tiết">@model!.DepartmentId</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(DepartmentModel.DepartmentName) Width="270px" Title="Tên bộ phận"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới bộ phận" : $"Cập nhật bộ phận {DepartmentUpdate!.DepartmentName}")">
+    <EditForm EditContext="@_EditContext" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="mt-2">
+            <HLabel Value="Mã bộ phận:" />
+                <TelerikNumericTextBox Enabled="false" @bind-Value="@DepartmentUpdate.DepartmentId" Class="bh-link" Id="txtId" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtDepartmentName" Value="Tên bộ phận:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@DepartmentUpdate.DepartmentName" Id="txtDepartmentName" />
+            <HValidationTooltip ValidationFor="@(()=> DepartmentUpdate.DepartmentName)" Id="txtDepartmentName" />
+        </div> 
+    </EditForm>
+</HDialog>
+<HConfirm @ref="@_rDialogs" />

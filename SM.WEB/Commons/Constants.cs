@@ -34,4 +34,8 @@ public static class EndpointConstants
     public const string URL_MASTERDATA_DELETE = "MasterData/DeleteData";
     public const string URL_MASTERDATA_UPDATE_CUSTOMER = "MasterData/UpdateCustomer";
     public const string URL_MASTERDATA_GET_CUSTOMER = "MasterData/GetCustomers";
+    public const string URL_MASTERDATA_UPDATE_DEPARTMENT = "MasterData/UpdateDepartment";
+    public const string URL_MASTERDATA_GET_DEPARTMENTS = "MasterData/GetDepartments";
+    public const string URL_MASTERDATA_UPDATE_PRODUCT = "MasterData/UpdateProduct";
+    public const string URL_MASTERDATA_GET_PRODUCTS = "MasterData/GetProducts";
 }

@@ -49,6 +49,7 @@ public class ResponseModel<T>
 public class ComboboxModel
 {
     public string? Code { get; set; }
+    public int Id { get; set; }
     public string? Name { get; set; }
     public bool IsCheck{ get; set; }
 }
@@ -76,6 +77,7 @@ public class SearchModel
     public string? Type { get; set; }
     public DateTime CurDate { get; set; }
     public string? EmpNo { get; set; }
+    public int SearchUserId { get; set; }
 }
 
 public enum EnumType
@@ -91,7 +93,9 @@ public enum EnumType
 public enum EnumTable
 {
     @Users,
-    @Customers
+    @Customers,
+    @Departments,
+    @Products
 }
 
 public enum DocStatus

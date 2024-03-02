@@ -1,0 +1,80 @@
+﻿@page "/product"
+@inherits ProductController;
+@*@attribute [Authorize(Roles = "administrator, manager")]*@
+
+<TelerikToolBar Class="border-bottom-0">
+    <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@ReLoadDataHandler">Làm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/add-new-icon.png" OnClick="@(()=> OnOpenDialogHandler())">Thêm mới</ToolBarButton>
+    <ToolBarButton ImageUrl="../assets/remove_grid.png" OnClick="@DeleteDataHandler">Xóa dòng</ToolBarButton>
+     <ToolBarButton ImageUrl="../assets/refresh.png" OnClick="@(async () => await GridRef.SaveAsExcelFileAsync())">Xuất excel</ToolBarButton>
+</TelerikToolBar>
+<div class="h-table-content" style=" height: calc(100vh - 170px);">
+    <TelerikLoaderContainer OverlayThemeColor="light"
+                            Visible="@(!IsInitialDataLoadComplete)"
+                            Text="@null" Class="grid-initial-data-loader">
+        <Template>
+            <TelerikLoader Type="@LoaderType.InfiniteSpinner"
+                           Size="@(ThemeConstants.Loader.Size.Medium)">
+            </TelerikLoader>
+        </Template>
+    </TelerikLoaderContainer>
+
+    <TelerikGrid Data="@ListProducts"
+                 @ref="@GridRef"   
+                 Height="100%"
+                 Width="100%"
+                 RowHeight="25"
+                 Pageable="true"
+                 PageSize="@DefaultConstants.PAGE_SIZE"
+                 Sortable="true"
+                 Resizable="true"
+                 FilterMode="@GridFilterMode.FilterMenu"
+                 SelectionMode="@GridSelectionMode.Multiple"
+                 ScrollMode="@GridScrollMode.Scrollable"
+                 OnRowDoubleClick="@OnRowDoubleClickHandler"
+                 @bind-SelectedItems="@SelectedProducts">
+        <GridSettings>
+            <GridPagerSettings InputType="PagerInputType.Input" />
+        </GridSettings>
+        <GridAggregates>
+            <GridAggregate Field=@nameof(ProductModel.ProductName) Aggregate="@GridAggregateType.Count" />
+        </GridAggregates>
+        <GridColumns>
+            <GridCheckboxColumn Width="30px" SelectAll="@true"></GridCheckboxColumn>
+           <GridColumn Field=@nameof(ProductModel.ProductId) Width="130px" MaxResizableWidth="150" Title="Mã sản phẩm">
+                <Template>
+                    @{
+                        var model = (context as ProductModel);
+                        <span class="h-link" @onclick="@(() => OnOpenDialogHandler(EnumType.Update, model))" title="Xem chi tiết">@model!.ProductId</span>
+                    }
+                </Template>
+                <FooterTemplate>
+                    Số dòng: @context.Count
+                </FooterTemplate>
+            </GridColumn>
+            <GridColumn Field=@nameof(ProductModel.ProductName) Width="270px" Title="Tên sản phẩm"></GridColumn>
+        </GridColumns>
+    </TelerikGrid>
+</div>
+
+<HDialog @bind-IsVisible="@IsShowDialog"
+         SaveAndClosed="@(()=> SaveDataHandler())"
+         Title="@(IsCreate ? "Thêm mới sản phẩm" : $"Cập nhật sản phẩm {ProductUpdate!.ProductName}")">
+    <EditForm EditContext="@_EditContext" autocomplete="off">
+        <DataAnnotationsValidator />
+        <div class="mt-2">
+            <HLabel Value="Mã sản phẩm:" />
+                <TelerikNumericTextBox Enabled="false" @bind-Value="@ProductUpdate.ProductId" Class="bh-link" Id="txtId" />
+        </div>
+        <div class="mt-2">
+            <HLabel For="txtProductName" Value="Tên sản phẩm:" IsRequired="true" />
+            <TelerikTextBox @bind-Value="@ProductUpdate.ProductName" Id="txtProductName" />
+            <HValidationTooltip ValidationFor="@(()=> ProductUpdate.ProductName)" Id="txtProductName" />
+        </div> 
+        <div class="mt-2">
+            <HLabel For="txtProductName" Value="Miêu tả:" />
+            <TelerikTextArea @bind-Value="@ProductUpdate.Description" Id="txtDescription"  AutoSize="true" Size="1000"/>
+        </div> 
+    </EditForm>
+</HDialog>
+<HConfirm @ref="@_rDialogs" />
