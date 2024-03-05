@@ -29,6 +29,7 @@ public partial class MainLayout
     public string EmpNo { get; set; } = "";
     public string UserName { get; set; } = "";
     public int UserId { get; set; } = -1;
+    public bool pIsAdmin { get; set; } = false;
     public UserProfileModel UserUpdate { get; set; } = new UserProfileModel();
     EventCallback<List<BreadcrumbModel>> BreadcrumbsHandler =>
         EventCallback.Factory.Create(this, (Action<List<BreadcrumbModel>>)NotifyBreadcrumb);
@@ -130,11 +131,11 @@ public partial class MainLayout
             if (oUser != null)
             {
                 FullName = oUser.User.Claims.FirstOrDefault(m => m.Type == "FullName")?.Value + "";
-                bool isAdmin = oUser.User.Claims.FirstOrDefault(m => m.Type == "IsAdmin")?.Value?.ToUpper() == "TRUE";
+                pIsAdmin = oUser.User.Claims.FirstOrDefault(m => m.Type == "IsAdmin")?.Value?.ToUpper() == "TRUE";
                 EmpNo = oUser.User.Claims.FirstOrDefault(m => m.Type == "EmpNo")?.Value + "";
                 UserName = oUser.User.Claims.FirstOrDefault(m => m.Type == "UserName")?.Value + "";
                 UserId  = int.Parse(oUser.User.Claims.FirstOrDefault(m => m.Type == "UserId")?.Value + "");
-                RoleName = isAdmin ? $"{EmpNo} - Admin" : $"{EmpNo} - Nhân viên";
+                RoleName = pIsAdmin ? $"{EmpNo} - Admin" : $"{EmpNo} - Nhân viên";
                 await InvokeAsync(StateHasChanged);
             }
         }

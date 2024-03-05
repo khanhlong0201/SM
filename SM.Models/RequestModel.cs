@@ -74,10 +74,12 @@ public class SearchModel
     public DateTime? ToDate { get; set; }
     public string? StatusId { get; set; }
     public bool IsAdmin { get; set; }
-    public string? Type { get; set; }
     public DateTime CurDate { get; set; }
     public string? EmpNo { get; set; }
     public int SearchUserId { get; set; }
+    public string? TypeTime { get; set; } // quí or tháng
+    public string? Type { get; set; } // loại báo cáo ( doanh thu theo ldv hay doanh thu theo dv)
+    public int Year { get; set; }
 }
 
 public enum EnumType
@@ -116,7 +118,7 @@ public enum TypeTime
 
 public enum ReportType
 {
-    @DoanhThuSachLoaiSach,
+    @DoanhThuKhachHangMuaHangLienHe,
 }
 
 public enum Kind
@@ -127,8 +129,8 @@ public enum Kind
 
 public enum ServiceType
 {
-    @Book,
-    @KindBook
+    @Purchase,
+    @Contact
 }
 
 

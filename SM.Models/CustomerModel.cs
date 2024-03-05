@@ -21,5 +21,7 @@ public class CustomerModel : Auditable
     public string ProductName { get; set; }
     public string Description { get; set; }
     public string CustomerSource { get; set; }
+    public string Kind { get; set; }//loại khách hàng
+    public string KindName { get; set; }
 
 }

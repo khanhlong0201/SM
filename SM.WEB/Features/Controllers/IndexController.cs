@@ -7,6 +7,7 @@ using SM.Models.Shared;
 using Microsoft.AspNetCore.Components.Authorization;
 using SM.WEB.Features.Pages;
 using Telerik.Blazor.Components;
+using Newtonsoft.Json;
 
 namespace SM.WEB.Features.Controllers
 {
@@ -18,33 +19,55 @@ namespace SM.WEB.Features.Controllers
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
         [Inject] private IDateTimeService? _datetimeService { get; init; }
         [Inject] private NavigationManager? _navigationManager { get; init; }
-
+        [Inject]  private  IDateTimeService _dateTimeService { get; init; }
 
         #endregion Dependency Injection
 
         #region Properties
         public bool IsInitialDataLoadComplete { get; set; } = true;
         public SearchModel ItemFilter = new SearchModel();
-        public List<UserModel>? ListUsers { get; set; }
-        public List<CustomerModel>? ListCustomers { get; set; }
-        public UserModel CurUser { get; set; } = new UserModel();
+        public List<ReportModel>? ListIndex { get; set; }
         public bool IsShowDialogEmp { get; set; }
-        public DateTime FromDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-        public DateTime ToDate = DateTime.Now;
+        public TelerikGrid<ReportModel> GridRef { get; set; }
 
         #endregion
 
         #region Override Functions
+        protected void OnNavHandler(ReportModel? pItemDetails = null)
+        {
+            try
+            {
+                if(pIsAdmin==false && pItemDetails.UserId != pUserId)
+                {
+                    ShowWarning("Bạn không thể truy cập vào xem khách hàng của người nhân viên khác !!!");
+                    return;
+                }
+                Dictionary<string, string> pParams = new Dictionary<string, string>
+                {
+                    { "UserId", $"{pItemDetails.UserId}"},
+                    { "IsAdmin", $"{pIsAdmin}" },
+                };
+                string key = EncryptHelper.Encrypt(JsonConvert.SerializeObject(pParams)); // mã hóa key
+                _navigationManager!.NavigateTo($"/customer?key={key}");
+            }
+            catch (Exception ex)
+            {
+                _logger!.LogError(ex, "IndexController", "OnNavHandler");
+                ShowError(ex.Message);
+            }
+        }
+
+
         protected async void ReLoadDataHandler()
         {
             try
             {
                 IsInitialDataLoadComplete = false;
-                await getDataCustomers();
+                await getDataIndexs();
             }
             catch (Exception ex)
             {
-                _logger!.LogError(ex, "UserController", "ReLoadDataHandler");
+                _logger!.LogError(ex, "IndexController", "ReLoadDataHandler");
                 ShowError(ex.Message);
             }
             finally
@@ -53,33 +76,14 @@ namespace SM.WEB.Features.Controllers
                 await InvokeAsync(StateHasChanged);
             }
         }
-        protected void OnRowDoubleClickHandler(GridRowClickEventArgs args) => OnOpenDialogHandler(args.Item as UserModel);
-        protected void OnOpenDialogHandler(UserModel? pItemDetails = null)
-        {
-            try
-            {
-                ItemFilter.SearchUserId = pItemDetails.Id;
-                IsShowDialogEmp = false;
-                getDataCustomers();
-            }
-            catch (Exception ex)
-            {
-                _logger!.LogError(ex, "BranchController", "OnOpenDialogHandler");
-                ShowError(ex.Message);
-            }
-        }
-
 
         protected override async Task OnInitializedAsync()
         {
             try
             {
                 await base.OnInitializedAsync();
-                CurUser.EmpNo = "-1";
-                CurUser.FullName = "Đang cập nhật";
-                CurUser.PhoneNumber = "Đang cập nhật";
-                CurUser.Email = "Đang cập nhật";
-                CurUser.Address = "Đang cập nhật";
+                ItemFilter.FromDate = _dateTimeService.GetCurrentVietnamDate000();
+                ItemFilter.ToDate = _dateTimeService.GetCurrentVietnamTime();
                 ListBreadcrumbs = new List<BreadcrumbModel>
                 {
                     new BreadcrumbModel() { Text = "Trang chủ", IsShowIcon = true, Icon = "fa-solid fa-house-chimney" },
@@ -99,19 +103,8 @@ namespace SM.WEB.Features.Controllers
             {
                 try
                 {
-                    ItemFilter.CurDate = _datetimeService!.GetCurrentVietnamTime();
                     await _progressService!.SetPercent(0.4);
-                    ListUsers = await _masterDataService!.GetDataUsersAsync();
-                    var oUser = ListUsers?.FirstOrDefault(m=>m.Id == pUserId);
-                    if(oUser != null)
-                    {
-                        CurUser.EmpNo = oUser.EmpNo;
-                        CurUser.FullName = oUser.FullName;
-                        CurUser.PhoneNumber = oUser.PhoneNumber;
-                        CurUser.Email = oUser.Email;
-                        CurUser.Address = oUser.Address;
-                    }
-                    ListCustomers = await _masterDataService!.GetCustomersAsync(ItemFilter);
+                    ListIndex = await _masterDataService!.GetIndexsAsync(ItemFilter);
                 }
                 catch (Exception ex)
                 {
@@ -129,11 +122,10 @@ namespace SM.WEB.Features.Controllers
         #endregion Override Functions
 
         #region Private Functions
-        private async Task getDataCustomers()
+        private async Task getDataIndexs()
         {
-            ItemFilter.FromDate = FromDate;
-            ItemFilter.ToDate = ToDate;
-            ListCustomers = await _masterDataService!.GetCustomersAsync(ItemFilter);
+            ListIndex = await _masterDataService!.GetIndexsAsync(ItemFilter);
+            GridRef?.Rebind();
         }
         #endregion
     }

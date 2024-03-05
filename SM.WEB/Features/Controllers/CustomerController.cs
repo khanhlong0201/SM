@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.WebUtilities;
 using Newtonsoft.Json;
 using SM.Models;
+using SM.Models.Shared;
 using SM.WEB.Commons;
 using SM.WEB.Components;
 using SM.WEB.Models;
@@ -18,6 +20,8 @@ namespace SM.WEB.Features.Controllers
         [Inject] private ICliMasterDataService? _masterDataService { get; init; }
         public HConfirm? _rDialogs { get; set; }
         public TelerikGrid<CustomerModel> GridRef { get; set; }
+        [Inject] private NavigationManager? _navigationManager { get; init; }
+
         #endregion
 
         #region Properties
@@ -31,6 +35,7 @@ namespace SM.WEB.Features.Controllers
         public bool IsCreate { get; set; } = true;
         public List<ProductModel>? ListProducts { get; set; } = new List<ProductModel>();
         public ProductModel ProductUpdate { get; set; } = new ProductModel();
+        public string UserId { get; set; } = "-1";
         #endregion
 
         #region Override Functions
@@ -60,6 +65,20 @@ namespace SM.WEB.Features.Controllers
                 try
                 {
                     await _progressService!.SetPercent(0.4);
+                    // đọc giá tri câu query
+                    var uri = _navigationManager?.ToAbsoluteUri(_navigationManager.Uri);
+                    if (uri != null && QueryHelpers.ParseQuery(uri.Query).Count > 0)
+                    {
+                        string key = uri.Query.Substring(5); // để tránh parse lỗi;    
+                        Dictionary<string, string> pParams = JsonConvert.DeserializeObject<Dictionary<string, string>>(EncryptHelper.Decrypt(key));
+                        if (pParams != null && pParams.Any() && pParams.ContainsKey("UserId")) UserId = pParams["UserId"];
+                    }
+                    await _progressService!.SetPercent(0.4);
+                    if (string.IsNullOrWhiteSpace(UserId))
+                    {
+                        ShowWarning("Vui lòng tải lại trang hoặc liên hệ IT để được hổ trợ");
+                        return;
+                    }
                     await getDataCustomers();
 
                 }
@@ -101,6 +120,8 @@ namespace SM.WEB.Features.Controllers
         {
             ListCustomers = new List<CustomerModel>();
             SelectedCustomers = new List<CustomerModel>();
+
+            ItemSearch.UserId = Int32.Parse(UserId);
             ListCustomers = await _masterDataService!.GetCustomersAsync(ItemSearch);
             GridRef?.Rebind();
         }

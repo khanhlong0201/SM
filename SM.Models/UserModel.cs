@@ -29,6 +29,8 @@ public class UserModel : Auditable
     [Required(ErrorMessage = "Vui lòng điền nhập lại Mật khẩu")]
     public string? ReEnterPassword { get; set; }
     public string? PasswordNew { get; set; }
+
+    [Required(ErrorMessage = "Vui lòng chọn bộ phận")]
     public int DepartmentId { get; set; }
     public string? DepartmentName { get; set; }
 }

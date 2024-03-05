@@ -28,7 +28,7 @@ public interface ICliMasterDataService
     Task<bool> UpdateDepartmentAsync(string pJson, string pAction, int pUserId);
     Task<List<ProductModel>?> GetDataProductsAsync(int pUserId = -1);
     Task<bool> UpdateProductAsync(string pJson, string pAction, int pUserId);
-
+    Task<List<ReportModel>?> GetIndexsAsync(SearchModel search);
 
 }
 public class CliMasterDataService : CliServiceBase, ICliMasterDataService 
@@ -460,4 +460,37 @@ public class CliMasterDataService : CliServiceBase, ICliMasterDataService
         return false;
     }
 
+
+    /// <summary>
+    /// Call API lấy biểu đồ + danh sách ở index
+    /// </summary>
+    /// <param name="pSearch"></param>
+    /// <returns></returns>
+    public async Task<List<ReportModel>?> GetIndexsAsync(SearchModel pSearch)
+    {
+        try
+        {
+            HttpResponseMessage httpResponse = await PostAsync(EndpointConstants.URL_MASTERDATA_GET_INDEXS, pSearch);
+            var checkContent = ValidateJsonContent(httpResponse.Content);
+            if (!checkContent) _toastService.ShowError(DefaultConstants.MESSAGE_INVALID_DATA);
+            else
+            {
+                var content = await httpResponse.Content.ReadAsStringAsync();
+                if (httpResponse.IsSuccessStatusCode) return JsonConvert.DeserializeObject<List<ReportModel>>(content);
+                if (httpResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _toastService.ShowInfo(DefaultConstants.MESSAGE_LOGIN_EXPIRED);
+                    return null;
+                }
+                var oMessage = JsonConvert.DeserializeObject<ResponseModel>(content);
+                _toastService.ShowError($"{oMessage?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetIndexsAsync");
+            _toastService.ShowError(ex.Message);
+        }
+        return default;
+    }
 }

@@ -122,7 +122,7 @@
             </div>
         </div>
         <div class="mt-2">
-            <HLabel For="txtNoteForAll" Value="Bộ phận:" />
+            <HLabel For="txtNoteForAll" Value="Bộ phận:" IsRequired="true" />
              <TelerikComboBox Data="@ListDepartments"
                   ValueChanged="@((int departmentId) => SelectedDepartmentChanged(departmentId))"
                 Value="@UserUpdate.DepartmentId"

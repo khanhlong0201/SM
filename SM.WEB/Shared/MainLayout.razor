@@ -89,6 +89,8 @@
                                         </span>
                                     </a>
                                 </li>
+                                @if(pIsAdmin){
+                                    
                                 <li class="nav-item @(PageActive == "/user" ||  PageActive == "/" ? "active": "")">
                                     <a class="nav-link" href="user">
                                         <span class="nav-link-icon d-md-none d-lg-inline-block">
@@ -132,6 +134,7 @@
                                         </span>
                                     </a>
                                 </li>
+                                }
                                 
                             </ul>
                         </div>

@@ -28,6 +28,7 @@ public interface IMasterDataService
     Task<IEnumerable<ProductModel>> GetProductsAsync(int pUserId = -1);
 
     Task<ResponseModel> UpdateProducts(RequestModel pRequest);
+    Task<IEnumerable<ReportModel>>GetIndexsAsync(SearchModel search);
 }
 
 public class MasterDataService : IMasterDataService
@@ -263,6 +264,8 @@ public class MasterDataService : IMasterDataService
         try
         {
             await _context.Connect();
+            SqlParameter[] sqlParameters = new SqlParameter[1];
+            sqlParameters[0] = new SqlParameter("@UserId", pSearch.UserId);
             data = await _context.GetDataAsync(@$"select [CusNo], T0.[FullName], T0.[PhoneNumber], T0.[Email], T0.[Address], T0.[DateOfBirth]
                       ,T0.[NoteForAll],T0.[DateCreate],T0.[UserCreate],T0.[DateUpdate],T0.[UserUpdate]
 					  ,T1.FullName as [UserNameCreate], T2.FullName as [UserNameUpdate]
@@ -274,8 +277,9 @@ public class MasterDataService : IMasterDataService
 		    left join [dbo].[Users] as T1 with(nolock) on T0.UserCreate = T1.Id
 			left join [dbo].[Users] as T2 with(nolock) on T0.UserUpdate = T2.Id
 			left join [dbo].[Products] as T3 with(nolock) on T0.ProductId = T3.ProductId
-					where T0.[IsDelete] = 0 order by [CusNo] desc"
-                    , DataRecordToCustomerModel, commandType: CommandType.Text);
+					where T0.[IsDelete] = 0
+                    and isnull(@UserId,-1)=-1 or t0.UserCreate = @UserId order by [CusNo] desc"
+                    , DataRecordToCustomerModel, sqlParameters, commandType: CommandType.Text);
         }
         catch (Exception) { throw; }
         finally
@@ -686,10 +690,72 @@ public class MasterDataService : IMasterDataService
         return data;
     }
 
+    /// <summary>
+    /// Lấy danh sách index
+    /// </summary>
+    /// <param name="pUserid">ID người dùng (mặc định là -1)</param>
+    /// <returns>Danh sách index</returns>
+    public async Task<IEnumerable<ReportModel>> GetIndexsAsync(SearchModel search)
+    {
+        IEnumerable<ReportModel> data;
+        try
+        {
+            await _context.Connect();
+
+            SqlParameter[] sqlParameters = new SqlParameter[2];
+            sqlParameters[0] = new SqlParameter("@TodayMidnight", search.FromDate);
+            sqlParameters[1] = new SqlParameter("@CurrentDateTime", search.ToDate);
+
+            string query = @"SELECT 
+                t0.Id as UserId,
+                t0.UserName,
+                t0.FullName,
+                t1.DepartmentName,
+                SUM(CASE WHEN t2.Kind = 'LH' THEN 1 ELSE 0 END) AS 'QtyCusContact',
+                SUM(CASE WHEN t2.Kind = 'MH' THEN 1 ELSE 0 END) AS 'QtyCusPurchased'
+            FROM Users t0 WITH(NOLOCK)
+            LEFT JOIN Departments t1 WITH(NOLOCK) ON t0.DepartmentId = t1.DepartmentId
+            LEFT JOIN Customers t2 WITH(NOLOCK) ON t0.Id = t2.UserCreate AND t2.DateCreate BETWEEN @TodayMidnight AND @CurrentDateTime
+            GROUP BY 
+                t0.Id, t0.UserName, t0.FullName, t1.DepartmentName;"; // Không lấy lên tk Support
+
+            data = await _context.GetDataAsync(query, DataRecordToIndexModel, sqlParameters, commandType: CommandType.Text);
+        }
+        catch (Exception)
+        {
+            throw;
+        }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
 
     #endregion Public Funtions
 
     #region Private Funtions
+    /// <summary>
+    /// đọc danh sách index
+    /// </summary>
+    /// <param name="record"></param>
+    /// <returns></returns>
+    private ReportModel DataRecordToIndexModel(IDataRecord record)
+    {
+        ReportModel dep = new();
+        if (!Convert.IsDBNull(record["UserId"])) dep.UserId = Convert.ToInt32(record["UserId"]);
+        if (!Convert.IsDBNull(record["UserName"])) dep.UserName = Convert.ToString(record["UserName"]);
+        if (!Convert.IsDBNull(record["FullName"])) dep.FullName = Convert.ToString(record["FullName"]);
+        if (!Convert.IsDBNull(record["DepartmentName"])) dep.DepartmentName = Convert.ToString(record["DepartmentName"]);
+        if (!Convert.IsDBNull(record["QtyCusContact"])) dep.QtyCusContact = Convert.ToInt32(record["QtyCusContact"]);
+        if (!Convert.IsDBNull(record["QtyCusPurchased"])) dep.QtyCusPurchased = Convert.ToInt32(record["QtyCusPurchased"]);
+        return dep;
+    }
+    /// <summary>
+    /// đọc danh sách sản phẩm
+    /// </summary>
+    /// <param name="record"></param>
+    /// <returns></returns>
 
     /// <summary>
     /// đọc danh sách phòng ban
