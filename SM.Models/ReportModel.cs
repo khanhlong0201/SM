@@ -31,5 +31,7 @@ public class ReportModel : Auditable
     public string? Color_02 { get; set; }
     public string? Time { get; set; }
     public int UserId { get; set; }
+    public double TotalReveune { get; set; }
+     
 
 }

@@ -320,5 +320,26 @@ namespace SM.API.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("GetReports")]
+        public async Task<IActionResult> GetReports([FromBody] SearchModel pSearchData)
+        {
+            try
+            {
+                var response = await _masterService.GetReportsAsync(pSearchData);
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "MasterDataController", "GetIndexs");
+                return StatusCode(StatusCodes.Status400BadRequest, new
+                {
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    ex.Message
+                });
+
+            }
+        }
+
     }
 }

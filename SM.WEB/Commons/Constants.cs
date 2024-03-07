@@ -39,4 +39,5 @@ public static class EndpointConstants
     public const string URL_MASTERDATA_UPDATE_PRODUCT = "MasterData/UpdateProduct";
     public const string URL_MASTERDATA_GET_PRODUCTS = "MasterData/GetProducts";
     public const string URL_MASTERDATA_GET_INDEXS = "MasterData/GetIndexs";
+    public const string URL_MASTERDATA_GET_REPORTS = "MasterData/GetReports";
 }

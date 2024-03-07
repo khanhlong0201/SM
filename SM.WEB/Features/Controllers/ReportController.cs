@@ -143,7 +143,7 @@ namespace SM.WEB.Features.Controllers
                 ListTypeReports = new List<ComboboxModel>()
                 {
 
-                    new ComboboxModel() {Code = nameof(ReportType.@DoanhThuKhachHangMuaHangLienHe), Name = "Số lượng khác hàng liên hệ - khách hàng mua hàng"},
+                    new ComboboxModel() {Code = nameof(ReportType.@DoanhThuKhachHangMuaHangLienHe), Name = "Số lượng khách hàng liên hệ - khách hàng mua hàng"},
 
                 };
 
@@ -255,7 +255,7 @@ namespace SM.WEB.Features.Controllers
         {
             switch (location)
             {
-                case "/report-purchase":
+                case "/report":
                     pReportType = nameof(ReportType.DoanhThuKhachHangMuaHangLienHe);
                     break;
             }
@@ -281,18 +281,14 @@ namespace SM.WEB.Features.Controllers
                 if (currentLocation != null)
                 {
                     // currentLocation = currentLocation.ToUpper();
-                    if (currentLocation.Contains("/report-lm"))
+                    if (currentLocation.Contains("/report-purchase"))
                     {
-                        await setDataBreadCrumChanged("/report-lm");
+                        await setDataBreadCrumChanged("/report-purchase");
                     }
-                    else if (currentLocation.Contains("/report-book"))
+                    else if (currentLocation.Contains("/report-contact"))
                     {
-                        await setDataBreadCrumChanged("/report-book");
-                    }
-                    else if (currentLocation.Contains("/report-kindbook"))
-                    {
-                        await setDataBreadCrumChanged("/report-kindbook");
-                    }
+                        await setDataBreadCrumChanged("/report-contact");
+                    } 
                 }
             }
             catch (Exception ex)
@@ -337,7 +333,7 @@ namespace SM.WEB.Features.Controllers
             }
             //ItemFilter.IsAdmin = pIsAdmin;
             ItemFilter.Year = pYearDefault;
-            ListReports = await _masterDataService!.GetIndexsAsync(ItemFilter);
+            ListReports = await _masterDataService!.GetReportsAsync(ItemFilter);
 
 
             ListChart = new List<ReportModel>();

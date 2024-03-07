@@ -29,6 +29,7 @@ public interface IMasterDataService
 
     Task<ResponseModel> UpdateProducts(RequestModel pRequest);
     Task<IEnumerable<ReportModel>>GetIndexsAsync(SearchModel search);
+    Task<IEnumerable<ReportModel>> GetReportsAsync(SearchModel search);
 }
 
 public class MasterDataService : IMasterDataService
@@ -732,9 +733,124 @@ public class MasterDataService : IMasterDataService
         return data;
     }
 
+    /// <summary>
+    /// lấy kết quả báo cáo
+    /// </summary>
+    /// <param name="isAdmin"></param>
+    /// <returns></returns>
+    public async Task<IEnumerable<ReportModel>> GetReportsAsync(SearchModel pSearchData)
+    {
+        List<ReportModel> data = new List<ReportModel>();
+        try
+        {
+            await _context.Connect();
+            if (pSearchData.FromDate == null) pSearchData.FromDate = new DateTime(2023, 01, 01);
+            if (pSearchData.ToDate == null) pSearchData.ToDate = _dateTimeService.GetCurrentVietnamTime();
+            SqlParameter[] sqlParameters = new SqlParameter[6];
+            sqlParameters[0] = new SqlParameter("@FromDate", pSearchData.FromDate.Value);
+            sqlParameters[1] = new SqlParameter("@ToDate", pSearchData.ToDate.Value);
+            sqlParameters[2] = new SqlParameter("@TypeTime", pSearchData.TypeTime);
+            sqlParameters[3] = new SqlParameter("@Type", pSearchData.Type);
+            sqlParameters[4] = new SqlParameter("@UserId", pSearchData.UserId);
+            sqlParameters[5] = new SqlParameter("@Year", pSearchData.Year);
+            var results = await _context.GetDataSetAsync(Constants.STORE_REPORT_ALL, sqlParameters, commandType: CommandType.StoredProcedure);
+            if (results.Tables != null && results.Tables.Count > 0)
+            {
+                foreach (DataRow row in results.Tables[0].Rows)
+                {
+                    switch (pSearchData.Type + "")
+                    {
+                        case "BaoCaoQuiThangKhachHangMuaHang":
+                            data.Add(DataRecordBaoCaoQuiThangKhachHangMuaHangToReportModel(row));
+                            break;
+                        case "BaoCaoQuiThangKhachHangLienHe":
+                            data.Add(DataRecordBaoCaoQuiThangKhachHangLienHeToReportModel(row));
+                            break;
+                        case "BaoCaoKhachHangMuaHang":
+                            data.Add(DataRecordBaoCaoKhachHangMuaHangToReportModel(row));
+                            break;
+                        case "BaoCaoKhachHangLienHe":
+                            data.Add(DataRecordBaoCaoKhachHangLienHeToReportModel(row));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        catch (Exception) { throw; }
+        finally
+        {
+            await _context.DisConnect();
+        }
+        return data;
+    }
+
     #endregion Public Funtions
 
     #region Private Funtions
+    private ReportModel DataRecordBaoCaoKhachHangLienHeToReportModel(DataRow row)
+    {
+        // Mapping các cột của DataTable sang properties của ReportModel
+        ReportModel model = new();
+        if (!Convert.IsDBNull(row["UserName"])) model.UserName = Convert.ToString(row["UserName"]);
+        if (!Convert.IsDBNull(row["FullName"])) model.FullName = Convert.ToString(row["FullName"]);
+        if (!Convert.IsDBNull(row["DepartmentName"])) model.DepartmentName = Convert.ToString(row["DepartmentName"]);
+        if (!Convert.IsDBNull(row["QtyCusContact"])) model.QtyCusContact = Convert.ToInt32(row["QtyCusContact"]);
+        return model;
+    }
+    private ReportModel DataRecordBaoCaoKhachHangMuaHangToReportModel(DataRow row)
+    {
+        // Mapping các cột của DataTable sang properties của ReportModel
+        ReportModel model = new();
+        if (!Convert.IsDBNull(row["UserName"])) model.UserName = Convert.ToString(row["UserName"]);
+        if (!Convert.IsDBNull(row["FullName"])) model.FullName = Convert.ToString(row["FullName"]);
+        if (!Convert.IsDBNull(row["DepartmentName"])) model.DepartmentName = Convert.ToString(row["DepartmentName"]);
+        if (!Convert.IsDBNull(row["QtyCusPurchased"])) model.QtyCusPurchased = Convert.ToInt32(row["QtyCusPurchased"]);
+        return model;
+    }
+    private ReportModel DataRecordBaoCaoQuiThangKhachHangMuaHangToReportModel(DataRow row)
+    {
+        // Mapping các cột của DataTable sang properties của ReportModel
+        ReportModel model = new();
+        if (!Convert.IsDBNull(row["UserName"])) model.UserName = Convert.ToString(row["UserName"]);
+        if (!Convert.IsDBNull(row["FullName"])) model.FullName = Convert.ToString(row["FullName"]);
+        if (!Convert.IsDBNull(row["DepartmentName"])) model.DepartmentName = Convert.ToString(row["DepartmentName"]);
+        if (!Convert.IsDBNull(row["Total_01"])) model.Total_01 = Convert.ToDouble(row["Total_01"]);
+        if (!Convert.IsDBNull(row["Total_02"])) model.Total_02 = Convert.ToDouble(row["Total_02"]);
+        if (!Convert.IsDBNull(row["Total_03"])) model.Total_03 = Convert.ToDouble(row["Total_03"]);
+        if (!Convert.IsDBNull(row["Total_04"])) model.Total_04 = Convert.ToDouble(row["Total_04"]);
+        if (!Convert.IsDBNull(row["Total_05"])) model.Total_05 = Convert.ToDouble(row["Total_05"]);
+        if (!Convert.IsDBNull(row["Total_06"])) model.Total_06 = Convert.ToDouble(row["Total_06"]);
+        if (!Convert.IsDBNull(row["Total_07"])) model.Total_07 = Convert.ToDouble(row["Total_07"]);
+        if (!Convert.IsDBNull(row["Total_08"])) model.Total_08 = Convert.ToDouble(row["Total_08"]);
+        if (!Convert.IsDBNull(row["Total_09"])) model.Total_09 = Convert.ToDouble(row["Total_09"]);
+        if (!Convert.IsDBNull(row["Total_10"])) model.Total_10 = Convert.ToDouble(row["Total_10"]);
+        if (!Convert.IsDBNull(row["Total_11"])) model.Total_11 = Convert.ToDouble(row["Total_11"]);
+        if (!Convert.IsDBNull(row["Total_12"])) model.Total_12 = Convert.ToDouble(row["Total_12"]);
+        return model;
+    }
+    private ReportModel DataRecordBaoCaoQuiThangKhachHangLienHeToReportModel(DataRow row)
+    {
+        // Mapping các cột của DataTable sang properties của ReportModel
+        ReportModel model = new();
+        if (!Convert.IsDBNull(row["UserName"])) model.UserName = Convert.ToString(row["UserName"]);
+        if (!Convert.IsDBNull(row["FullName"])) model.FullName = Convert.ToString(row["FullName"]);
+        if (!Convert.IsDBNull(row["DepartmentName"])) model.DepartmentName = Convert.ToString(row["DepartmentName"]);
+        if (!Convert.IsDBNull(row["Total_01"])) model.Total_01 = Convert.ToDouble(row["Total_01"]);
+        if (!Convert.IsDBNull(row["Total_02"])) model.Total_02 = Convert.ToDouble(row["Total_02"]);
+        if (!Convert.IsDBNull(row["Total_03"])) model.Total_03 = Convert.ToDouble(row["Total_03"]);
+        if (!Convert.IsDBNull(row["Total_04"])) model.Total_04 = Convert.ToDouble(row["Total_04"]);
+        if (!Convert.IsDBNull(row["Total_05"])) model.Total_05 = Convert.ToDouble(row["Total_05"]);
+        if (!Convert.IsDBNull(row["Total_06"])) model.Total_06 = Convert.ToDouble(row["Total_06"]);
+        if (!Convert.IsDBNull(row["Total_07"])) model.Total_07 = Convert.ToDouble(row["Total_07"]);
+        if (!Convert.IsDBNull(row["Total_08"])) model.Total_08 = Convert.ToDouble(row["Total_08"]);
+        if (!Convert.IsDBNull(row["Total_09"])) model.Total_09 = Convert.ToDouble(row["Total_09"]);
+        if (!Convert.IsDBNull(row["Total_10"])) model.Total_10 = Convert.ToDouble(row["Total_10"]);
+        if (!Convert.IsDBNull(row["Total_11"])) model.Total_11 = Convert.ToDouble(row["Total_11"]);
+        if (!Convert.IsDBNull(row["Total_12"])) model.Total_12 = Convert.ToDouble(row["Total_12"]);
+        return model;
+    }
     /// <summary>
     /// đọc danh sách index
     /// </summary>
